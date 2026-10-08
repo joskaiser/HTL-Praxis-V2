@@ -1,0 +1,30 @@
+HTTPS-BEREITSTELLUNG MIT GITHUB PAGES
+====================================
+
+Die Programmdaten koennen oeffentlich gehostet sein; darin stehen keine Schuelerdaten.
+Die persoenlichen Daten liegen lokal bzw. nach Anmeldung im OneDrive-App-Ordner.
+
+1. Auf github.com ein privates oder oeffentliches Repository erstellen, z.B. htl-praxis.
+   Hinweis: GitHub Pages bei privaten Repositories haengt vom GitHub-Tarif ab.
+
+2. Den kompletten Inhalt dieses App-Ordners in das Repository laden.
+   Der Ordner .github/workflows muss mitgeladen werden.
+
+3. Repository -> Settings -> Pages -> Source = GitHub Actions.
+
+4. Nach dem Push fuehrt die mitgelieferte Workflow-Datei die Bereitstellung aus.
+
+5. Die Pages-Adresse lautet typischerweise:
+   https://<benutzer>.github.io/<repository>/
+
+6. Diese Adresse in Microsoft Entra als SPA Redirect URI eintragen.
+
+7. App im Browser oeffnen, Einstellungen -> Client-ID eintragen -> OneDrive verbinden.
+
+8. Handy:
+   iPhone/iPad Safari -> Teilen -> Zum Home-Bildschirm.
+   Android Chrome/Edge -> App installieren / Zum Startbildschirm.
+
+Updates:
+Neue App-Dateien + angehobene version.json/sw.js in das Repository laden.
+GitHub Pages stellt sie automatisch bereit; die installierte PWA zeigt das Update an.

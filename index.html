@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#233747" />
+  <title>HTL Praxis</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="config.js"></script>
+  <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">HTL1 Bau und Design</div>
+      <h1>HTL Praxis</h1>
+    </div>
+    <div class="top-actions">
+      <button id="btnInstall" class="btn secondary" hidden>App installieren</button>
+      <span id="syncStatus" class="sync-status">OneDrive: lokal</span>
+      <button id="btnSync" class="btn secondary">OneDrive</button>
+      <button id="btnSettings" class="btn">Einstellungen</button>
+    </div>
+  </header>
+  <div id="updateBanner" class="update-banner" hidden>
+    <span id="updateText">Neue Version verfügbar</span>
+    <div><button id="applyUpdate" class="btn">Jetzt aktualisieren</button><button id="dismissUpdate" class="btn secondary">Später</button></div>
+  </div>
+
+  <main class="app-shell">
+    <aside class="sidebar">
+      <section>
+        <label>Schuljahr</label>
+        <select id="yearSelect"></select>
+      </section>
+      <section>
+        <div class="section-title-row"><h2>Klassen</h2><button id="btnAddClass" class="icon-btn" title="Klasse hinzufügen">+</button></div>
+        <div id="classNav" class="nav-list"></div>
+      </section>
+      <section>
+        <button id="btnDashboard" class="nav-button active">Übersicht</button>
+        <button id="btnImport" class="nav-button">Klassen-/Gruppenliste</button>
+      </section>
+    </aside>
+
+    <section class="content"><div id="view"></div></section>
+  </main>
+
+  <dialog id="modal"></dialog>
+  <input id="fileImport" type="file" accept=".csv,.txt" hidden />
+  <input id="curriculumImport" type="file" accept=".csv,.txt,.json" hidden />
+  <input id="photoPicker" type="file" accept="image/*" capture="environment" hidden />
+
+  <template id="ratingTemplate">
+    <div class="rating" role="group" aria-label="Bewertung 0 bis 4">
+      <button data-value="1"></button><button data-value="2"></button><button data-value="3"></button><button data-value="4"></button>
+    </div>
+  </template>
+</body>
+</html>

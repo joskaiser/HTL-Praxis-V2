@@ -1,0 +1,39 @@
+MICROSOFT / ONEDRIVE EINRICHTUNG
+================================
+
+1. Microsoft Entra Admin Center oeffnen:
+   https://entra.microsoft.com
+
+2. Identitaet -> Anwendungen -> App-Registrierungen -> Neue Registrierung
+
+3. Name z.B.:
+   HTL Praxis
+
+4. Kontotyp:
+   Wenn nur ein Schulkonto verwendet wird: Nur Konten in diesem Organisationsverzeichnis.
+   Fuer persoenliche + Schul-/Firmenkonten: passenden Mehrmandanten-Kontotyp waehlen.
+
+5. Nach der Registrierung die Anwendungs-ID (Client-ID) notieren.
+
+6. Authentifizierung -> Plattform hinzufuegen -> Single-Page-Anwendung (SPA)
+
+7. Redirect URI eintragen.
+   Die App zeigt die exakte Redirect URI unter Einstellungen an.
+   Fuer lokalen Test z.B.:
+   http://localhost:8080/
+   Fuer Handy/Produktion muss es die HTTPS-Adresse sein.
+
+8. API-Berechtigungen -> Microsoft Graph -> Delegierte Berechtigungen:
+   User.Read
+   Files.ReadWrite.AppFolder
+
+9. In HTL Praxis -> Einstellungen:
+   Client-ID eintragen.
+   Tenant bei Bedarf auf die Tenant-ID der Schule setzen, sonst common.
+
+10. OneDrive -> "Nach OneDrive speichern".
+    Beim ersten Mal anmelden und Berechtigungen bestaetigen.
+
+Hinweis:
+Files.ReadWrite.AppFolder beschraenkt die App auf ihren eigenen OneDrive-App-Ordner und ist daher
+fuer diesen Anwendungsfall deutlich restriktiver als Files.ReadWrite auf das gesamte OneDrive.

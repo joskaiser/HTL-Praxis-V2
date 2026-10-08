@@ -1,0 +1,6 @@
+{
+  "version": "6.0.0",
+  "dataSchema": 3,
+  "released": "2026-10-07",
+  "notes": "PWA-Updates, OneDrive-App-Ordner, Cloud-Backups, Auto-Sync, IndexedDB-Speicherung"
+}
