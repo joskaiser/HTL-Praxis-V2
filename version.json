@@ -1,6 +1,1 @@
-{
-  "version": "7.3.0",
-  "dataSchema": 3,
-  "released": "2026-10-07",
-  "notes": "Klassenraum: freie Groessen, Mehrfachauswahl, Ausrichten und Verteilen, Raster und Doppeltische"
-}
+{"version":"7.4.0","dataSchema":3,"released":"2026-10-08","notes":"Zwei getrennte Skaliergriffe, Einheitenfilter im Bericht, Ganztagsanwesenheit"}

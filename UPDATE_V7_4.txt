@@ -1,0 +1,6 @@
+i-i_Doku 7.4.0
+- Zwei getrennte Skaliergriffe im Raumeditor: Breite (rechts) und Tiefe (unten), auch bei Drehung.
+- Auswertung ueber alle Unterrichtseinheiten, einzelne Einheiten abwaehlbar. Notizen, Fehlstunden und Lehrerdurchschnitt folgen der Auswahl.
+- Ganztags anwesend / abwesend in Klassen- und Gruppenliste, wechselseitig exklusiv.
+- Bestehende Daten bleiben erhalten.
+- Nach GitHub Upload Deployment abwarten und Browser/App aktualisieren.

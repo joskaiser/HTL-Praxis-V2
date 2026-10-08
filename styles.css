@@ -56,10 +56,12 @@ code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em;o
 .room-fixture{padding:2px;overflow:hidden;font-size:clamp(7px,.85vw,12px)}
 .room-wall{background:#566777;color:#fff;border-radius:1px}
 .room-selected{outline:3px solid #1673c9;outline-offset:2px;z-index:2}
-.room-handle{position:absolute;right:-8px;bottom:-8px;width:17px;height:17px;background:#fff;border:3px solid #1673c9;border-radius:3px;cursor:nwse-resize;touch-action:none;z-index:4}
+.room-handle{position:absolute;width:21px;height:21px;background:#fff;border:3px solid #1673c9;border-radius:5px;touch-action:none;z-index:10;box-shadow:0 1px 5px #0005}.room-handle-width{right:-11px;top:calc(50% - 11px);cursor:ew-resize;background:#d9f5eb;border-color:#16866c}.room-handle-height{bottom:-11px;left:calc(50% - 11px);cursor:ns-resize;background:#dbeafe;border-color:#2563eb}
 .room-controls{display:flex;gap:9px;align-items:end;flex-wrap:wrap}.room-controls label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700}.room-controls input,.room-controls select{padding:8px;border:1px solid #cbd3d8;border-radius:6px;max-width:145px}
 .room-multi{display:inline-flex;gap:7px;align-items:center;margin:8px 0;font-size:13px}.room-hint{margin-top:8px}
 .room-layout{overflow-x:auto}.room-canvas{min-width:440px}
 @media print{.room-multi,.room-hint{display:none!important}}
 
 .toolbar .btn.secondary{color:#fff;background:var(--navy)}
+
+.report-unit-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:7px;margin-top:12px;max-height:240px;overflow:auto}.report-unit{display:flex;align-items:center;gap:8px;padding:7px;border:1px solid var(--line,#d4dae2);border-radius:6px;font-size:.9rem}@media print{.report-unit-list,.report-unit-list+*,#reportAllUnits,#reportNoUnits{display:none!important}}
