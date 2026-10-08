@@ -1,6 +1,6 @@
 {
-  "version": "7.1.0",
+  "version": "7.3.0",
   "dataSchema": 3,
   "released": "2026-10-07",
-  "notes": "OneDrive-Fenster mobil schließen; Notizen pro Bewertungskategorie"
+  "notes": "Klassenraum: freie Groessen, Mehrfachauswahl, Ausrichten und Verteilen, Raster und Doppeltische"
 }

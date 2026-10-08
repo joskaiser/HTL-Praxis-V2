@@ -1,0 +1,3 @@
+i-i_Doku 7.2.0: proportional skalierender Raumplan, Tischraster Einzel/Doppel, Breitenregler fuer Tueren/Fenster, fortlaufende Platznummern.
+Bestehende config.js aus dem Repository beibehalten. Nicht mit personenbezogenen Daten auf oeffentliches GitHub hochladen.
+Raumplan auf Desktop und iPhone testen.

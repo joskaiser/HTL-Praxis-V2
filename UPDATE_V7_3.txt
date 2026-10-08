@@ -1,0 +1,1 @@
+i-i_Doku 7.3.0: Klassenraum-Editor mit Mehrfachauswahl, Ausrichten, Verteilen, Groessenanpassung, Doppeltischraster und proportionaler Darstellung. Bestehende config.js nicht ueberschreiben. ZIP entpacken und Dateien in GitHub hochladen. Vorher Sicherung der App-Daten erstellen. Noch nicht auf Endgeraeten getestet.
