@@ -1,0 +1,11 @@
+i-i_Doku 6.0.1 - Teilpatch
+
+Enthalten:
+- X und Schließen im Dialog; Klick außerhalb schließt Dialog.
+- OneDrive-Fenster schließt nach erfolgreichem manuellem Laden/Speichern.
+- Notizfeld je Bewertungskategorie in der Schüleransicht, Speicherung im bestehenden Datenbestand.
+- Service-Worker-Version angehoben.
+
+Noch NICHT enthalten: zentrale Skriptensammlung, PDF-Seitenauswahl, Auswertungen/PDF, Änderung der Stundenpläne.
+
+Wichtig: Erst OneDrive-Backup sichern; vor dem Aktualisieren keine ungespeicherten lokalen Änderungen. Alle Dateien außer .git ins GitHub-Repository übernehmen.

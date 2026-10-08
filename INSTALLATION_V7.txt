@@ -1,0 +1,25 @@
+HTL Praxis / i-i_Doku v7.0.0 - Entwicklungsstand
+
+Die ZIP enthaelt die GitHub-Pages-App ohne config.js und ohne .git-Verzeichnis.
+Vor der Aktualisierung: alte config.js im Repository BELASSEN.
+Alle Dateien aus der ZIP im Repository ersetzen/ergaenzen, anschliessend GitHub Pages deployen.
+Auf iPhone die installierte App vollstaendig schliessen und neu starten.
+
+NEU
+- Skriptothek: PDF/Bild bis 40 MB in den OneDrive-App-Ordner hochladen.
+- Verknuepfung mit Unterrichtseinheiten (Seitenangaben wie 3,7-9,24; Notizen).
+- Live-Auswertung je Klasse/Gruppe/Schueler; PDF ueber Browser-Druckfunktion.
+- OneDrive-Ordnerbaum fuer Schuljahr, Klassen, Gruppen, Schueler, Einheiten, Auswertungen.
+- CSV-Import war bereits vorhanden (Klasse;Gruppe;Name).
+- Bewertungsnotizen und OneDrive-Schliessen aus Patch 6.0.1 enthalten.
+
+WICHTIGE EINSCHRAENKUNGEN
+- Der Ordnerbaum wird bei Anmeldung/synchronisiertem Zustand erstellt; offline nachgeholt.
+- App-Ordner liegt unter Apps/HTL Praxis; OneDrive-AppFolder-Rechte gestatten keinen freien Zugriff auf beliebige OneDrive-Verzeichnisse.
+- PDF-Seiten werden als Auswahl dokumentiert, aber der Link oeffnet noch das Originaldokument; keine echte PDF-Seitenextraktion.
+- PDF-Ausgabe ist Browser-Druck/Als PDF sichern, nicht serverseitige PDF-Generierung.
+- Dateien ueber 40 MB erfordern spaeter eine Graph-Upload-Session.
+- Synchronisation der Datei-Metadaten erfolgt ueber den JSON-Datenbestand. Dateiinhalt liegt separat in OneDrive.
+- Keine echten Schuelerdaten ohne Freigabe durch Schule/Datenschutzverantwortliche importieren.
+- Keine Browser-/iPhone-End-to-End-Tests erfolgt. Zuerst mit Testdaten pruefen.
+- Keine echten Schuelerlisten in ein oeffentliches GitHub-Repository einchecken.
