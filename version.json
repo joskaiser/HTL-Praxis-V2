@@ -1,1 +1,6 @@
-{"version":"7.4.0","dataSchema":3,"released":"2026-10-08","notes":"Zwei getrennte Skaliergriffe, Einheitenfilter im Bericht, Ganztagsanwesenheit"}
+{
+  "version": "7.5.1",
+  "dataSchema": 3,
+  "released": "2026-10-08",
+  "notes": "Separate Raumplaene und Sitzordnungen je Gruppe; Raumplan kopieren"
+}

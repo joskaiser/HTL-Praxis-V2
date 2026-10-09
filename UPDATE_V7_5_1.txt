@@ -1,0 +1,2 @@
+i-i_Doku 7.5.1: Gruppenbezogene Raumplaene. Bestehender Klassenraumplan bleibt als Vorlage erhalten. Pro Gruppe eigene Kopie, getrennte Sitzzuordnungen. Raumplan einer anderen Gruppe ohne Schuelerzuordnungen kopierbar.
+Hinweis: ZIP-Quelle trug intern Versionskennung 7.4.0.
