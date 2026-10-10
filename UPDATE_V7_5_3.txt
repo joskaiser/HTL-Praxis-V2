@@ -1,0 +1,6 @@
+i-i_Doku 7.5.3
+- iOS PWA: Microsoft Anmeldung via MSAL Redirect statt Popup. Nach Rueckkehr OneDrive erneut oeffnen.
+- Gruppenansicht: Klassenraumplan direkt oeffnen; Rueckkehr in die Gruppe.
+- Gruppenansicht: Klassenraum-Grundeinstellung mit Sicherheitsabfrage uebernehmen (ohne Schuelerzuordnung).
+- Kein automatisches Hochladen nach Redirect.
+- Bitte vor Update Backup exportieren und mit Testdaten pruefen.

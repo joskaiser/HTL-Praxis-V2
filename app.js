@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION='7.5.2';
+const APP_VERSION='7.5.3';
 const DATA_SCHEMA_VERSION=3;
 const DB_NAME='htl-praxis-db';
 const DB_STORE='app';
@@ -135,7 +135,7 @@ function settingsDialog(){
   <div><b>App-Version</b><br>${APP_VERSION}</div><div><b>Datenversion</b><br>${DATA_SCHEMA_VERSION}</div><div><b>Letzte Synchronisierung</b><br>${escapeHtml(state.sync?.lastSyncedAt?new Date(state.sync.lastSyncedAt).toLocaleString('de-AT'):'noch nie')}</div><div><b>Online</b><br>${navigator.onLine?'ja':'nein'}</div>
  </div>
  <div class="modal-actions"><button class="btn secondary" id="importBackup">Backup importieren</button><button class="btn secondary" id="exportBackup">Backup exportieren</button><button class="btn secondary" id="checkUpdate">Updates prüfen</button><button class="btn" id="mSave">Speichern</button></div>`);
- document.getElementById('mSave').onclick=()=>{set.clientId=document.getElementById('mClient').value.trim();set.tenantId=document.getElementById('mTenant').value.trim()||'common';set.autoSync=document.getElementById('mAutoSync').value==='1';currentYear().schoolStart=document.getElementById('mSchoolStart').value;msalApp=null;saveState();closeModal();render()};
+ document.getElementById('mSave').onclick=()=>{set.clientId=document.getElementById('mClient').value.trim();set.tenantId=document.getElementById('mTenant').value.trim()||'common';set.autoSync=document.getElementById('mAutoSync').value==='1';currentYear().schoolStart=document.getElementById('mSchoolStart').value;msalApp=null;msalReadyPromise=null;saveState();closeModal();render()};
  document.getElementById('exportBackup').onclick=exportBackup;document.getElementById('importBackup').onclick=importBackup;document.getElementById('checkUpdate').onclick=()=>checkForUpdates(false);
 }
 function exportBackup(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`HTL-Praxis_Backup_${new Date().toISOString().replace(/[:.]/g,'-')}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
@@ -144,7 +144,11 @@ function importBackup(){const input=document.createElement('input');input.type='
 let msalApp=null,syncBusy=false;
 const GRAPH_SCOPES=['User.Read','Files.ReadWrite.AppFolder'];
 function msalConfig(){const cfg=window.HTL_CONFIG||{};return{auth:{clientId:state.settings.clientId||cfg.clientId||'',authority:`https://login.microsoftonline.com/${state.settings.tenantId||cfg.tenantId||'common'}`,redirectUri:cfg.redirectUri||location.origin+location.pathname},cache:{cacheLocation:'localStorage'}}}
-async function getGraphToken(interactive=true){const clientId=state.settings.clientId||(window.HTL_CONFIG||{}).clientId;if(!clientId)throw new Error('Bitte zuerst unter Einstellungen die Microsoft App Client-ID eintragen.');if(!window.msal)throw new Error('Microsoft-Anmeldemodul konnte nicht geladen werden.');if(!msalApp){msalApp=new msal.PublicClientApplication(msalConfig());await msalApp.initialize?.()}let acc=msalApp.getAllAccounts()[0];if(!acc){if(!interactive)throw new Error('Nicht angemeldet');const r=await msalApp.loginPopup({scopes:GRAPH_SCOPES});acc=r.account}try{return(await msalApp.acquireTokenSilent({account:acc,scopes:GRAPH_SCOPES})).accessToken}catch(e){if(!interactive)throw e;return(await msalApp.acquireTokenPopup({scopes:GRAPH_SCOPES})).accessToken}}
+// iOS home-screen apps cannot reliably open MSAL popups. Use full-page redirect there.
+function isStandaloneIOS(){return /iPad|iPhone|iPod/.test(navigator.userAgent)&& (navigator.standalone===true || window.matchMedia('(display-mode: standalone)').matches)}
+let msalReadyPromise=null;
+async function readyMsal(){if(!msalReadyPromise){msalReadyPromise=(async()=>{const app=new msal.PublicClientApplication(msalConfig());await app.initialize?.();await app.handleRedirectPromise();msalApp=app;return app})().catch(e=>{msalReadyPromise=null;throw e})}return msalReadyPromise}
+async function getGraphToken(interactive=true){const clientId=state.settings.clientId||(window.HTL_CONFIG||{}).clientId;if(!clientId)throw new Error('Bitte zuerst unter Einstellungen die Microsoft App Client-ID eintragen.');if(!window.msal)throw new Error('Microsoft-Anmeldemodul konnte nicht geladen werden.');const app=await readyMsal();let acc=app.getAllAccounts()[0];if(!acc){if(!interactive)throw new Error('Nicht angemeldet');if(isStandaloneIOS()){await app.loginRedirect({scopes:GRAPH_SCOPES});throw new Error('Microsoft-Anmeldung wird geöffnet. Bitte danach OneDrive erneut aufrufen.')}const r=await app.loginPopup({scopes:GRAPH_SCOPES});acc=r.account}try{return(await app.acquireTokenSilent({account:acc,scopes:GRAPH_SCOPES})).accessToken}catch(e){if(!interactive)throw e;if(isStandaloneIOS()){await app.acquireTokenRedirect({scopes:GRAPH_SCOPES,account:acc});throw new Error('Microsoft-Anmeldung wird geöffnet. Bitte danach OneDrive erneut aufrufen.')}return(await app.acquireTokenPopup({scopes:GRAPH_SCOPES,account:acc})).accessToken}}
 async function graph(token,url,opts={}){const r=await fetch('https://graph.microsoft.com/v1.0'+url,{...opts,headers:{Authorization:`Bearer ${token}`,...(opts.headers||{})}});if(!r.ok){const body=await r.text();const err=new Error(`${r.status} ${body}`);err.status=r.status;throw err}const ct=r.headers.get('content-type')||'';if(r.status===204)return null;if(ct.includes('json'))return r.json();return r.text()}
 async function appRoot(token){return graph(token,'/me/drive/special/approot')}
 async function remoteMeta(token,rootId){try{return await graph(token,`/me/drive/items/${rootId}:/htl-praxis-data.json`)}catch(e){if(e.status===404)return null;throw e}}
