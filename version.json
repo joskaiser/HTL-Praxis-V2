@@ -1,6 +1,1 @@
-{
-  "version": "7.5.3",
-  "dataSchema": 3,
-  "released": "2026-10-10",
-  "notes": "iOS-PWA Microsoft-Redirect-Anmeldung; Gruppenraum-Navigation und Grundeinstellung uebernehmen"
-}
+{"version":"7.5.4","dataSchema":3,"released":"2026-10-10","notes":"Drei-Wege-OneDrive-Abgleich mit Konfliktschutz"}

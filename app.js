@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION='7.5.3';
+const APP_VERSION='7.5.4';
 const DATA_SCHEMA_VERSION=3;
 const DB_NAME='htl-praxis-db';
 const DB_STORE='app';
@@ -156,13 +156,117 @@ async function ensureChildFolder(token,parentId,name){try{return await graph(tok
 async function uploadJson(token,parentId,name,obj,extraHeaders={}){return graph(token,`/me/drive/items/${parentId}:/${encodeURIComponent(name)}:/content`,{method:'PUT',headers:{'Content-Type':'application/json',...extraHeaders},body:JSON.stringify(obj)})}
 async function downloadState(token,rootId){return graph(token,`/me/drive/items/${rootId}:/htl-praxis-data.json:/content`)}
 async function makeRemoteBackup(token,rootId,remoteData){if(!remoteData)return;const b=await ensureChildFolder(token,rootId,'Backups');const stamp=new Date().toISOString().replace(/[:.]/g,'-');await uploadJson(token,b.id,`htl-praxis_${stamp}.json`,remoteData)}
-function setSyncStatus(ok,msg=''){state.sync=state.sync||{};state.sync.lastError=ok?'':msg;if(ok)state.sync.lastSyncedAt=new Date().toISOString();saveState();updateHeaderStatus()}
-async function syncPull({silent=false}={}){if(syncBusy)return;syncBusy=true;try{const token=await getGraphToken(!silent),root=await appRoot(token),meta=await remoteMeta(token,root.id);if(!meta){if(!silent)alert('Auf OneDrive ist noch kein Datenbestand vorhanden.');return false}if(state.sync?.dirtySince){if(silent)return false;if(!confirm('Auf diesem Gerät gibt es noch nicht synchronisierte Änderungen. Cloud-Stand trotzdem laden und lokale Änderungen verwerfen?'))return false}const data=await downloadState(token,root.id);state=migrate(typeof data==='string'?JSON.parse(data):data);state.sync=state.sync||{};state.sync.remoteETag=meta.eTag||'';state.sync.remoteModifiedAt=meta.lastModifiedDateTime||'';state.sync.lastSyncedAt=new Date().toISOString();state.sync.lastError='';state.sync.dirtySince='';await idbSet('state',state);render();updateHeaderStatus();if(!silent){closeModal();alert('Daten von OneDrive geladen.')}return true}catch(e){state.sync=state.sync||{};state.sync.lastError=e.message;updateHeaderStatus();if(!silent)alert('OneDrive laden fehlgeschlagen: '+e.message);return false}finally{syncBusy=false}}
-async function syncPush({silent=false}={}){if(syncBusy)return;syncBusy=true;try{const token=await getGraphToken(!silent),root=await appRoot(token),meta=await remoteMeta(token,root.id);if(meta){if(!state.sync?.remoteETag){if(silent)return false;alert('Cloud-Daten vorhanden. Bitte zuerst von OneDrive laden. Lokale Änderungen vorher sichern.');return false}else if(meta.eTag!==state.sync.remoteETag){state.sync.lastError='Synchronisationskonflikt: Cloud wurde auf einem anderen Gerät geändert.';if(silent){updateHeaderStatus();return false}alert('Synchronisationskonflikt: Ein anderes Gerät hat Daten geändert. Es wird NICHT überschrieben. Bitte Daten sichern und den Konflikt klären.');return false}const remoteData=await downloadState(token,root.id);await makeRemoteBackup(token,root.id,remoteData)}const payload=structuredClone(state);payload.sync={...payload.sync,lastError:''};const saved=await uploadJson(token,root.id,'htl-praxis-data.json',payload,meta?.eTag?{'If-Match':meta.eTag}:{ });state.sync=state.sync||{};state.sync.remoteETag=saved?.eTag||'';state.sync.remoteModifiedAt=saved?.lastModifiedDateTime||'';state.sync.dirtySince='';setSyncStatus(true);if(!silent){closeModal();alert('OneDrive gespeichert.')}return true}catch(e){state.sync=state.sync||{};state.sync.lastError=e.message;updateHeaderStatus();if(!silent)alert('OneDrive speichern fehlgeschlagen: '+e.message);return false}finally{syncBusy=false}}
+// Synchronisation v7.5.4: gemeinsamer Basisstand, 3-Wege-Abgleich, bedingtes Schreiben.
+// Geraetespezifische Zugangsdaten und Sync-Metadaten werden nie zusammengefuehrt.
+const SYNC_BASE_KEY='sync-base-v754';
+const SYNC_KEYS=['schoolYears','activeYear','classes','students','units','records','curriculum','roomPlans','roomLayouts','rooms','classRooms','groupRooms','scripts','scriptLibrary','materials','settings'];
+const isPlain=o=>!!o&&typeof o==='object'&&!Array.isArray(o);
+const cloneData=x=>x===undefined?undefined:JSON.parse(JSON.stringify(x));
+function syncData(st){const out={};for(const k of Object.keys(st||{})){if(k==='sync'||k==='version')continue;out[k]=cloneData(st[k])}if(out.settings){delete out.settings.clientId;delete out.settings.tenantId;delete out.settings.autoSync}return out}
+function dataEqual(a,b){return JSON.stringify(a)===JSON.stringify(b)}
+function dataFingerprint(st){return JSON.stringify(syncData(st))}
+function itemArray(a){return Array.isArray(a)&&a.every(x=>isPlain(x)&&typeof x.id==='string')}
+function mergeThree(base,local,remote,path,conflicts,resolutions={}){
+ if(dataEqual(local,remote))return cloneData(local);
+ if(dataEqual(local,base))return cloneData(remote);
+ if(dataEqual(remote,base))return cloneData(local);
+ if(isPlain(local)&&isPlain(remote)&&(isPlain(base)||base===undefined)){
+  const result={};const keys=new Set([...Object.keys(base||{}),...Object.keys(local),...Object.keys(remote)]);
+  for(const key of keys){const v=mergeThree(base?.[key],local[key],remote[key],path?path+'.'+key:key,conflicts,resolutions);if(v!==undefined)result[key]=v}return result;
+ }
+ if(itemArray(local)&&itemArray(remote)&&(itemArray(base)||base===undefined)){
+  const b=new Map((base||[]).map(x=>[x.id,x]));const l=new Map(local.map(x=>[x.id,x]));const r=new Map(remote.map(x=>[x.id,x]));
+  const ids=[...new Set([...local.map(x=>x.id),...remote.map(x=>x.id),...(base||[]).map(x=>x.id)])];
+  return ids.map(id=>mergeThree(b.get(id),l.get(id),r.get(id),path+'['+id+']',conflicts,resolutions)).filter(x=>x!==undefined);
+ }
+ // Eine echte parallele Aenderung am selben Feld wird NICHT automatisch ueberschrieben.
+ if(resolutions[path]==='local')return cloneData(local);
+ if(resolutions[path]==='remote')return cloneData(remote);
+ conflicts.push({path,local:cloneData(local),remote:cloneData(remote)});
+ return cloneData(local);
+}
+function applySyncData(merged){const device={clientId:state.settings?.clientId,tenantId:state.settings?.tenantId,autoSync:state.settings?.autoSync};const oldSync=state.sync||{};state=migrate({...state,...merged,settings:{...(merged.settings||{}),...device},sync:oldSync});}
+async function getSyncBase(){return await idbGet(SYNC_BASE_KEY)}
+async function commitSync(remote,meta){const localPrefs={clientId:state.settings?.clientId,tenantId:state.settings?.tenantId,autoSync:state.settings?.autoSync};
+ const base=syncData(remote);await idbSet(SYNC_BASE_KEY,base);
+ state.sync={...(state.sync||{}),remoteETag:meta?.eTag||'',remoteModifiedAt:meta?.lastModifiedDateTime||'',lastSyncedAt:new Date().toISOString(),lastError:'',dirtySince:''};
+ state.settings={...state.settings,...localPrefs};await idbSet('state',state);updateHeaderStatus();}
+function syncError(e,silent){state.sync=state.sync||{};state.sync.lastError=e.message||String(e);idbSet('state',state).catch(console.warn);updateHeaderStatus();if(!silent)alert('OneDrive-Abgleich: '+state.sync.lastError)}
+async function syncNow({silent=false,downloadOnly=false,resolutions={}}={}){
+ if(syncBusy)return false;
+ syncBusy=true;
+ const before=dataFingerprint(state);
+ try{
+  const token=await getGraphToken(!silent),root=await appRoot(token),meta=await remoteMeta(token,root.id);
+  let base=await getSyncBase();
+  if(!meta){
+   if(downloadOnly){if(!silent)alert('Noch kein Datenbestand in OneDrive.');return false}
+   const payload=cloneData(state);payload.sync={};
+   const saved=await uploadJson(token,root.id,'htl-praxis-data.json',payload,{'If-None-Match':'*'});
+   if(before!==dataFingerprint(state))throw Error('Waehrend des Abgleichs wurden weitere lokale Aenderungen vorgenommen. Bitte erneut synchronisieren.');
+   await commitSync(payload,saved);if(!silent){closeModal();alert('Erster OneDrive-Abgleich erfolgreich.')}return true;
+  }
+  if(base&&meta.eTag===state.sync?.remoteETag&&dataEqual(syncData(state),base)){
+   if(!silent){closeModal();alert('Bereits aktuell – keine Aenderungen.')}return true;
+  }
+  const remoteRaw=await downloadState(token,root.id);const remote=migrate(cloneData(typeof remoteRaw==='string'?JSON.parse(remoteRaw):remoteRaw));
+  if(before!==dataFingerprint(state))throw Error('Lokale Daten haben sich waehrend des Downloads geaendert. Bitte erneut synchronisieren.');
+  const local=syncData(state),cloud=syncData(remote);
+  // Upgrade from older app: unchanged remote ETag is a trustworthy common base.
+  if(!base&&state.sync?.remoteETag&&state.sync.remoteETag===meta.eTag)base=cloud;
+  let merged;
+  if(!base){
+   if(dataEqual(local,cloud))merged=cloud;
+   else if(!state.sync?.dirtySince)merged=cloud;
+   else{
+    state.sync.lastError='Erster Abgleich: unterschiedliche lokale und Cloud-Daten ohne gemeinsamen Basisstand. Bitte Backup exportieren und die Daten manuell pruefen.';
+    if(!silent)alert(state.sync.lastError);
+    updateHeaderStatus();return false;
+   }
+  }else{
+   const conflicts=[];merged=mergeThree(base,local,cloud,'',conflicts,resolutions);
+   if(conflicts.length){
+    state.sync.lastError=conflicts.length+' gleichzeitige Aenderung(en) am selben Datenfeld. Kein automatisches Ueberschreiben.';
+    state.sync.conflicts=conflicts.map(c=>c.path);
+    updateHeaderStatus();if(!silent)showSyncConflicts(conflicts,resolutions);
+    return false;
+   }
+  }
+  if(downloadOnly&& !dataEqual(local,merged)){
+   if(!dataEqual(local,base||cloud)){
+    if(!silent)alert('Es gibt lokale Aenderungen. Bitte „Jetzt abgleichen“ verwenden, um sie mit der Cloud zusammenzufuehren.');return false;
+   }
+  }
+  if(dataEqual(merged,cloud)){
+   applySyncData(merged);await commitSync(remote,meta);render();if(!silent){closeModal();alert('OneDrive ist aktuell. Aenderungen wurden uebernommen.')}return true;
+  }
+  // Cloud nur bei unveraendertem ETag ersetzen. Bei parallelem Schreibzugriff wird 412 gemeldet.
+  await makeRemoteBackup(token,root.id,remoteRaw);
+  const payload={...remote,...merged,sync:{}};
+  const saved=await uploadJson(token,root.id,'htl-praxis-data.json',payload,{'If-Match':meta.eTag});
+  if(before!==dataFingerprint(state))throw Error('Lokale Aenderung waehrend des Uploads. Cloud ist gespeichert; bitte erneut abgleichen, um die neue Aenderung zu uebernehmen.');
+  applySyncData(merged);await commitSync(payload,saved);render();if(!silent){closeModal();alert('Aenderungen beider Geraete erfolgreich zusammengefuehrt.')}return true;
+ }catch(e){if(e.status===412||e.status===409)e=new Error('Ein anderes Geraet hat gleichzeitig gespeichert. Nichts ueberschrieben; bitte erneut abgleichen.');syncError(e,silent);return false}
+ finally{syncBusy=false}
+}
+function showSyncConflicts(conflicts,previous={}){
+ const rows=conflicts.slice(0,40).map((c,i)=>`<div class="field"><label><code>${escapeHtml(c.path)}</code></label><select data-resolve="${i}"><option value="">Bitte entscheiden</option><option value="local">Diese Geraeteversion behalten</option><option value="remote">OneDrive-Version uebernehmen</option></select></div>`).join('');
+ openModal(`<h2>Synchronisationskonflikt</h2><p>${conflicts.length} Felder wurden parallel geaendert. Waehle fuer jedes Feld die gueltige Fassung. Es wird nichts geloescht, bevor du bestaetigst.</p>${rows}${conflicts.length>40?'<p>Mehr als 40 Konflikte: Bitte zuerst Daten sichern und manuell pruefen.</p>':''}<div class="modal-actions"><button class="btn secondary" id="confBackup">Backup exportieren</button><button class="btn secondary" id="confClose">Abbrechen</button><button class="btn" id="confResolve" ${conflicts.length>40?'disabled':''}>Auswahl uebernehmen und abgleichen</button></div>`);
+ document.getElementById('confBackup').onclick=exportBackup;
+ document.getElementById('confClose').onclick=closeModal;
+ document.getElementById('confResolve').onclick=()=>{
+  const choices={...previous};for(let i=0;i<conflicts.length;i++){const value=document.querySelector(`[data-resolve="${i}"]`).value;if(!value){alert('Bitte fuer jeden Konflikt eine Fassung auswaehlen.');return}choices[conflicts[i].path]=value}
+  closeModal();syncNow({silent:false,resolutions:choices});
+ };
+}
+async function syncPull({silent=false}={}){return syncNow({silent,downloadOnly:true})}
+async function syncPush({silent=false}={}){return syncNow({silent})}
 function scheduleAutoSync(){if(!state?.settings?.autoSync||!navigator.onLine||syncBusy)return;clearTimeout(autoSyncTimer);autoSyncTimer=setTimeout(()=>autoSyncNow(),7000)}
-async function autoSyncNow(){if(!state?.settings?.autoSync||!navigator.onLine||syncBusy)return false;if(state.sync?.dirtySince)return syncPush({silent:true});return syncPull({silent:true})}
-async function syncDialog(){const s=state.sync||{};openModal(`<h2>OneDrive Synchronisierung</h2><p>Die App speichert den kompletten Unterrichtsdatenbestand inklusive komprimierter Profil- und Werkstückfotos im geschützten OneDrive-App-Ordner. Vor jedem Überschreiben wird automatisch ein Backup des bisherigen Cloud-Stands angelegt.</p><div class="system-grid"><div><b>Letzte Sync</b><br>${escapeHtml(s.lastSyncedAt?new Date(s.lastSyncedAt).toLocaleString('de-AT'):'noch nie')}</div><div><b>Remote geändert</b><br>${escapeHtml(s.remoteModifiedAt?new Date(s.remoteModifiedAt).toLocaleString('de-AT'):'–')}</div><div><b>Auto-Sync</b><br>${state.settings.autoSync?'ein':'aus'}</div><div><b>Status</b><br>${escapeHtml(s.lastError?'Fehler':'bereit')}</div></div>${s.lastError?`<div class="notice error-note">${escapeHtml(s.lastError)}</div>`:''}<div class="modal-actions"><button class="btn secondary" id="pull">Von OneDrive laden</button><button class="btn" id="push">Nach OneDrive speichern</button></div>`);document.getElementById('push').onclick=()=>syncPush({silent:false});document.getElementById('pull').onclick=()=>syncPull({silent:false})}
-function updateHeaderStatus(){const el=document.getElementById('syncStatus');if(!el||!state)return;const s=state.sync||{};el.textContent=s.lastError?'OneDrive: Fehler':s.lastSyncedAt?'OneDrive: '+new Date(s.lastSyncedAt).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}):'OneDrive: lokal';el.className='sync-status '+(s.lastError?'bad':s.lastSyncedAt?'good':'')}
+async function autoSyncNow(){if(!state?.settings?.autoSync||!navigator.onLine||syncBusy)return false;return syncNow({silent:true})}
+function syncDialog(){const s=state.sync||{};openModal(`<h2>OneDrive Synchronisierung</h2><p>Automatischer 3-Wege-Abgleich: Aenderungen an verschiedenen Schuelern, Einheiten und Feldern werden zusammengefuehrt. Bei gleichzeitiger Bearbeitung desselben Feldes wird sicherheitshalber angehalten.</p><div class="system-grid"><div><b>Letzter Abgleich</b><br>${escapeHtml(s.lastSyncedAt?new Date(s.lastSyncedAt).toLocaleString('de-AT'):'noch nie')}</div><div><b>Lokale Aenderungen</b><br>${s.dirtySince?'ja':'nein'}</div><div><b>Auto-Sync</b><br>${state.settings.autoSync?'ein':'aus'}</div><div><b>Status</b><br>${escapeHtml(s.lastError?'Pruefen':'bereit')}</div></div>${s.lastError?`<div class="notice error-note">${escapeHtml(s.lastError)}</div>`:''}<div class="field"><label><input type="checkbox" id="autoSyncToggle" ${state.settings.autoSync?'checked':''}> Automatisch abgleichen (bei Aenderungen und regelmaessig)</label></div><div class="modal-actions"><button class="btn secondary" id="syncBackup">Backup exportieren</button><button class="btn secondary" id="pull">Cloud laden (nur ohne lokale Aenderungen)</button><button class="btn" id="push">Jetzt abgleichen</button></div>`);
+ document.getElementById('push').onclick=()=>syncNow({silent:false});document.getElementById('pull').onclick=()=>syncPull({silent:false});document.getElementById('syncBackup').onclick=exportBackup;
+ document.getElementById('autoSyncToggle').onchange=e=>{state.settings.autoSync=e.target.checked;saveState();if(e.target.checked)scheduleAutoSync()};}
+function updateHeaderStatus(){const el=document.getElementById('syncStatus');if(!el||!state)return;const s=state.sync||{};el.textContent=s.lastError?'OneDrive: Konflikt/Fehler':s.dirtySince?'OneDrive: lokal geaendert':s.lastSyncedAt?'OneDrive: aktuell':'OneDrive: lokal';el.className='sync-status '+(s.lastError?'bad':s.dirtySince?'':'good')}
 
 // --- PWA Updates ---
 let swRegistration=null,deferredInstallPrompt=null;
@@ -176,6 +280,6 @@ window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;const b=d
 
 // UI bindings
 function bindUi(){document.getElementById('btnDashboard').onclick=()=>{route={type:'dashboard'};render()};document.getElementById('btnImport').onclick=importDialog;document.getElementById('btnSettings').onclick=settingsDialog;document.getElementById('btnSync').onclick=syncDialog;document.getElementById('btnAddClass').onclick=addClassDialog;document.getElementById('yearSelect').onchange=e=>{state.activeYear=e.target.value;saveState();route={type:'dashboard'};render()};document.getElementById('fileImport').onchange=e=>{if(e.target.files[0])importCsv(e.target.files[0]);e.target.value=''};document.getElementById('curriculumImport').onchange=e=>{if(e.target.files[0])importCurriculumFile(e.target.files[0]);e.target.value=''};document.getElementById('photoPicker').onchange=e=>{if(e.target.files[0])processPhoto(e.target.files[0]);e.target.value=''};document.getElementById('btnInstall').onclick=async()=>{if(deferredInstallPrompt){deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;document.getElementById('btnInstall').hidden=true}else alert('Im Browser-Menü „App installieren“ bzw. am Handy „Zum Startbildschirm hinzufügen“ wählen.')};document.getElementById('applyUpdate').onclick=applyUpdate;document.getElementById('dismissUpdate').onclick=hideUpdateBanner}
-async function boot(){state=await loadState();bindUi();render();updateHeaderStatus();await initPwa();window.addEventListener('online',()=>{updateHeaderStatus();if(state.settings.autoSync)autoSyncNow()});window.addEventListener('offline',updateHeaderStatus);if(state.settings.autoSync&&navigator.onLine)setTimeout(()=>autoSyncNow(),1500)}
+async function boot(){state=await loadState();bindUi();render();updateHeaderStatus();await initPwa();window.addEventListener('online',()=>{updateHeaderStatus();if(state.settings.autoSync)autoSyncNow()});window.addEventListener('offline',updateHeaderStatus);window.addEventListener('focus',()=>{if(state.settings.autoSync)autoSyncNow()});setInterval(()=>{if(state.settings.autoSync&&navigator.onLine)autoSyncNow()},60000);if(state.settings.autoSync&&navigator.onLine)setTimeout(()=>autoSyncNow(),1500)}
 boot();
 

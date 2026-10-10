@@ -1,0 +1,16 @@
+i-i_Doku 7.5.4 - OneDrive Synchronisierung
+
+- Automatischer Drei-Wege-Abgleich von lokalen und OneDrive-Daten mit separat gespeicherter Basis.
+- Unabhaengige Aenderungen an unterschiedlichen Schuelern/Einheiten/Feldern werden zusammengefuehrt.
+- Gleichzeitige Aenderungen desselben Feldes: ausdrueckliche Auswahl lokal/Cloud erforderlich.
+- Schutz vor Ueberschreiben bei zwischenzeitlicher Cloud-Aenderung (If-Match).
+- Optionaler automatischer Abgleich alle 60 Sekunden, bei App-Fokus und nach Bearbeitung.
+- Sync-Status in Kopfzeile; Backup-Export im Sync-Fenster.
+- Microsoft-Anmeldung am iPhone und Gruppenraumplaene aus 7.5.3 bleiben erhalten.
+
+WICHTIG: Vor Update Backup exportieren. Erstabgleich auf jedem Geraet manuell ausloesen.
+Wenn ein Geraet noch keine gemeinsame Sync-Basis hat und Cloud/lokal unterschiedlich sind,
+wird sicherheitshalber angehalten. Niemals ohne Backup Daten ersetzen.
+
+NICHT Bestandteil dieses Updates: Unterrichtsstoff-/Stammdaten-Erweiterungen, Foto- und
+Skriptseiten-Anhaenge an einzelnen Unterrichtseinheiten (separater Entwicklungsschritt).
