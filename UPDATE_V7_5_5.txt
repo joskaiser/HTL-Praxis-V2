@@ -1,0 +1,7 @@
+i-i_Doku 7.5.5: App-interne Dateiablage und Zuordnung.
+- OneDrive-Dateien aus Skriptothek importieren
+- Materialien pro Unterrichtseinheit hochladen und zuordnen
+- Schuelerunterlagen und Notizen pro Einheit
+- Schueler in andere Klassen/Gruppen verschieben
+- Ordner werden beim Upload automatisch angelegt
+Hinweis: Graph-Einzelupload max. 4 MB; bestehende Daten vorher sichern.

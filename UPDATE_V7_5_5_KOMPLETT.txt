@@ -1,0 +1,10 @@
+i-i_Doku v7.5.5 - Komplettpaket
+
+- Graph Upload Session fuer PDFs und Fotos bis 250 MB
+- Grosse Dateien in 5 MiB Teilstuecken
+- Zentrale Stammdatenpflege fuer Klassen und Gruppen
+- Unterrichtsstoff ueber bestehende Gesamtstoff-Verwaltung
+- Materialauswahl direkt aus Einheit bearbeiten
+- Bestehende Synchronisierung aus 7.5.4 bleibt erhalten
+
+Hinweis: Vor Installation Backup erstellen. Uploads und Parallelbetrieb auf echten Geraeten testen.

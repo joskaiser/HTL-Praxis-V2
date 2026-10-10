@@ -1,5 +1,5 @@
-const CACHE='htl-praxis-v7.5.4';
-const ASSETS=['./','./index.html','./styles.css','./app.js','./extra.js','./room.js','./config.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
+const CACHE='htl-praxis-v7.5.5-complete';
+const ASSETS=['./','./index.html','./styles.css','./app.js','./extra.js','./room.js','./media755.js','./config.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)));
