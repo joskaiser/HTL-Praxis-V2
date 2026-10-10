@@ -1,0 +1,7 @@
+Version 7.5.2
+- Auswertung aus 7.5.0 in Gruppenraumplaene aus 7.5.1 integriert
+- Kategoriegewichtung in Prozent; Umrechnung alter relativer Faktoren
+- Klassenraum-Grundeinstellung als separate Klassenansicht
+- Gruppenplaene weiterhin unabhaengig, Kopie aus Grundeinstellung moeglich
+- Cloud-Konflikte blockieren Upload, keine automatische Zusammenfuehrung paralleler Aenderungen
+WICHTIG: Vor dem Update OneDrive-Daten sichern. Browser-, Druck- und OneDrive-Tests ausstehend.

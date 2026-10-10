@@ -1,4 +1,4 @@
-const CACHE='htl-praxis-v7.5.1';
+const CACHE='htl-praxis-v7.5.2';
 const ASSETS=['./','./index.html','./styles.css','./app.js','./extra.js','./room.js','./config.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
