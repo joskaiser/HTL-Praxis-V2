@@ -1,4 +1,4 @@
-const CACHE='htl-praxis-v7.5.8-lesson';
+const CACHE='htl-praxis-v7.5.9-report';
 const ASSETS=['./','./index.html','./styles.css','./app.js','./extra.js','./room.js','./media755.js','./pages756.js','./lesson757.js','./config.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{

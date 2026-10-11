@@ -1,0 +1,10 @@
+7.5.9 – Berichte, Bewertung, Schulbranding
+- Klick auf bereits gewählten Punktwert entfernt die Bewertung statt 0 zu speichern.
+- Echte 0 Punkte können ausdrücklich über die neue Schaltfläche 0 erfasst werden.
+- Frühere gespeicherte 0-Werte sind mehrdeutig; in der Auswertung gibt es eine ausdrücklich bestätigte Bereinigung.
+- Gewichteter Durchschnitt nutzt nur bewertete Kategorien mit positivem Gewicht.
+- Optionales Drucken von PDF-Seitenminiaturen (max. 80 pro Bericht). Online und OneDrive-Anmeldung erforderlich.
+- Schulname, Lehrperson und Schullogo in Einstellungen. Logo in Berichten und App-Oberfläche.
+- Browser-Kopf-/Fußzeilen müssen ggf. im Druckdialog deaktiviert werden.
+- Installiertes iPhone-Icon kann Neuinstallation erfordern.
+- Vorher Datenbackup erstellen.
