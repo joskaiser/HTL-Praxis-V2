@@ -1,0 +1,15 @@
+i-i_Doku 7.5.6 - Visuelle PDF-Seitenauswahl
+
+Unter Materialien / Fotos einer Unterrichtseinheit: PDF-Seiten visuell auswaehlen.
+Mehrere PDFs aus der Skriptothek koennen nacheinander gewaehlt und Seiten markiert werden.
+Miniaturen, Grossansicht, Alle/Keine und manuelle Seitenbereiche sind vorhanden.
+Ausgewaehlte Seiten werden als Dokumentverknuepfungen in unitLinks gespeichert.
+Originaldateien bleiben unveraendert in OneDrive.
+
+WICHTIG: Die grafische PDF-Vorschau nutzt pdf.js von cdnjs.cloudflare.com.
+Sie benoetigt beim ersten Aufruf eine Internetverbindung. Wenn das Skript nicht
+verfuegbar ist, bleibt die manuelle Seitenbereichsauswahl nutzbar.
+Die Funktion wurde auf JavaScript-Syntax und ZIP-Inhalt geprueft, nicht mit
+einem realen Microsoft-Konto oder auf dem iPhone getestet.
+
+Vor Installation bitte Datenbackup exportieren.
