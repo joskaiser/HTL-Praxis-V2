@@ -1,0 +1,6 @@
+Version 7.5.7
+- Ausgewaehlte Unterlagen mit Seitenbereichen direkt in der Klasseneinheit.
+- PDF-Seiten aus OneDrive direkt in der App ansehen, blaettern, Notizen und Zeichnungen speichern.
+- Original-PDFs bleiben unveraendert.
+- Erstes Laden der PDF-Vorschau benoetigt Internet fuer PDF.js.
+- Bitte OneDrive-Synchronisierung und iPhone praktisch testen.
