@@ -1,0 +1,7 @@
+Version 7.5.12
+- Einheiten gruppenweise löschen. Ohne Daten: einfache Sicherheitsabfrage.
+- Mit Daten: Archivierung empfohlen; endgültiges Löschen nur nach Eingabe von LÖSCHEN.
+- Archivierte Einheiten wiederherstellen oder löschen.
+- Zeitlücken zwischen Unterrichtsblöcken als Pausen darstellen.
+- Vor Installation OneDrive synchronisieren und Backup exportieren.
+- ZIP enthält nur App-Code, keine Schülerdaten.

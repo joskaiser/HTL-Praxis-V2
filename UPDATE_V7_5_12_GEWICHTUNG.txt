@@ -1,0 +1,1 @@
+Ergaenzung v7.5.12: Die aktuelle klassenbezogene Gewichtung erscheint neben den Bewertungsrubriken in der Gruppen-Bewertungstabelle und in der Schuelerbewertung. Keine Aenderung an gespeicherten Daten oder der Berechnungslogik.

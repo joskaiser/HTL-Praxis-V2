@@ -1,0 +1,1 @@
+Ergaenzung zu 7.5.12: Im Klassenraumplan zeigt die Platzzuweisung Schuelerfotos und Namenskacheln. Antippen weist den Schueler zu; doppelte Zuweisungen werden wie bisher verhindert. Ohne Foto erscheinen Initialen. Keine Schuelerdaten im Update.

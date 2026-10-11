@@ -1,1 +1,1 @@
-{"version":"7.5.11","dataSchema":4,"released":"2026-10-11","notes":"Gruppeneigene Einheiten, Kopieren aus anderen Gruppen, optionale Notizen in Gruppenübersicht"}
+{"version": "7.5.12", "dataSchema": 4, "released": "2026-10-11", "notes": "Einheiten löschen oder bei vorhandenen Daten archivieren; Pausen zwischen Unterrichtsblöcken sichtbar"}

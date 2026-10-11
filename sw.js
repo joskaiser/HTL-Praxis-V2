@@ -1,4 +1,4 @@
-const CACHE='htl-praxis-v7.5.11-group-units';
+const CACHE='htl-praxis-v7.5.12-photo-seat-picker-weights';
 const ASSETS=['./','./index.html','./styles.css','./app.js','./extra.js','./room.js','./media755.js','./pages756.js','./lesson757.js','./config.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
