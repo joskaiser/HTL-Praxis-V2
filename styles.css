@@ -81,3 +81,11 @@ code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em;o
 .rating{display:flex!important;align-items:center;gap:2px}.rating .rating-clear,.rating .rating-zero{width:25px;min-width:25px;font-size:13px;border:1px solid #bdc9d2;background:#fff;color:#233747;border-radius:3px}.rating .rating-zero.filled{background:#233747;color:white}.rating button:disabled{opacity:.35;cursor:not-allowed}
 .report-schoolhead{display:flex;align-items:center;gap:14px;margin-bottom:14px}.report-schoollogo{width:76px;height:76px;object-fit:contain}.report-material{border-top:1px solid #d4dae2;padding:10px 0}.report-mini-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}.report-mini{margin:0;width:125px;break-inside:avoid}.report-mini canvas{width:100%;height:auto;border:1px solid #cbd5dc}.report-mini figcaption{text-align:center;font-size:11px}
 @media print{.report-attachments{display:block!important}.report-mini-grid{display:flex!important}.report-mini{width:100px}.report-schoolhead{display:flex!important}.report-schoollogo{max-width:65px;max-height:65px}a[href]::after{content:none!important}}
+
+/* 7.5.9 correction: prominent report grades */
+.report-grade-feature{display:flex;align-items:center;gap:16px;margin:12px 0 18px;padding:14px 18px;border:2px solid #176a52;border-radius:12px;background:#e6f4ec;color:#14533f;break-inside:avoid}
+.report-grade-caption{font-weight:700;font-size:15px;flex:1}
+.report-grade-number{font-size:58px;line-height:1;font-weight:900;min-width:66px;text-align:center}
+.report-grade-score{font-size:16px;font-weight:700}
+.report-grade-badge{display:inline-block;font-size:20px;font-weight:900;color:#14533f;background:#e6f4ec;border:1px solid #176a52;border-radius:7px;min-width:36px;padding:2px 7px;text-align:center}
+@media print{.report-grade-feature,.report-grade-badge{print-color-adjust:exact;-webkit-print-color-adjust:exact}.report-grade-feature{margin:4mm 0;padding:3mm 5mm}.report-grade-number{font-size:48pt}.report-grade-badge{font-size:16pt}}

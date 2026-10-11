@@ -1,0 +1,1 @@
+Korrektur 7.5.9: 0 = nicht bewertet; nur 1 bis 4 Punkte werden in der Gewichtung beruecksichtigt. Die Schulnote wird im Schuelerbericht gross und farbig sowie in der Gruppenliste hervorgehoben ausgegeben. Originaldaten bleiben unveraendert.
