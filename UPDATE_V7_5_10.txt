@@ -1,0 +1,8 @@
+Version 7.5.10
+- Unterrichtszeiten pro Klasse mit frei bearbeitbaren Zeitblöcken und Pausen.
+- Einzelne Unterrichtseinheit kann abweichende Zeitblöcke erhalten.
+- Fehlstunden werden aus den zugeordneten Zeitblöcken neu berechnet.
+- Schülerfotos klassenweise importieren; automatische Zuordnung anhand eindeutiger Dateinamen.
+- Originaldaten und Klassenraumpläne bleiben bestehen.
+- Schülerlisten bitte über CSV ausschließlich innerhalb der App importieren; keine personenbezogenen CSV-Dateien auf GitHub hochladen.
+- Vor produktivem Einsatz mit Testdaten prüfen.
