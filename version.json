@@ -1,1 +1,1 @@
-{"version": "7.5.10", "dataSchema": 3, "released": "2026-10-11", "notes": "Unterrichtszeiten individuell je Klasse/Einheit; klassenweiser Schülerfotoimport"}
+{"version":"7.5.11","dataSchema":4,"released":"2026-10-11","notes":"Gruppeneigene Einheiten, Kopieren aus anderen Gruppen, optionale Notizen in Gruppenübersicht"}

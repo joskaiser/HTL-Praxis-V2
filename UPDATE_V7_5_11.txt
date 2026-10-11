@@ -1,0 +1,7 @@
+Version 7.5.11
+- Unterrichtseinheiten je Gruppe statt je Klasse.
+- Bestehende Klasseneinheiten werden beim ersten Laden je Gruppe aufgeteilt; vorhandene Schülerbewertungen werden auf die entsprechende Gruppeneinheit umgehängt.
+- Neue Einheit und Kopie aus anderer Gruppe im Gruppenbereich.
+- Optionale Notizanzeige in Gruppenübersicht.
+- Vor dem Update OneDrive-Synchronisierung durchführen und ein Backup exportieren.
+- Keine Schülerdaten im ZIP.
