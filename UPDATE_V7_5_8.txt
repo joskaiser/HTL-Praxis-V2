@@ -1,0 +1,1 @@
+7.5.8: Ganztags abwesend sperrt Bewertung und schliesst sie von Statistiken aus. Bestehende Punkte bleiben bei Korrektur erhalten. Standardgewichtung 5/40/25/20/10/0. Einstellbarer Notenschluessel im Auswertungsbereich.

@@ -1,0 +1,1 @@
+Version 7.5.8 – Korrektur: Unbewertete Kategorien werden bei gewichteten Mittelwerten und Gruppenstatistiken nicht beruecksichtigt. 0 Punkte bleiben eine gueltige Bewertung. Kategorien mit 0 Prozent beeinflussen die gewichtete Note nicht. Ganztags abwesende Einheiten bleiben ausgeschlossen. Keine Datenmigration.
