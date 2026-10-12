@@ -1,0 +1,1 @@
+Version 7.5.14: Erneute Microsoft-Anmeldung im OneDrive-Dialog, wahlweise Popup oder Weiterleitung. Lokale Daten bleiben erhalten. Vor Aktualisierung Backup exportieren.

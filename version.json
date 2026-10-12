@@ -1,6 +1,6 @@
 {
-  "version": "7.5.13",
+  "version": "7.5.14",
   "dataSchema": 4,
   "released": "2026-10-12",
-  "notes": "Einheitenuebersicht mit Mehrfachauswahl; Speichern vor Materialwechsel; PDF-Seitenzuweisungen bleiben erhalten"
+  "notes": "Explizite Microsoft-Neuanmeldung (Popup oder Redirect) ohne Loeschen lokaler Daten"
 }

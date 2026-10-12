@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION='7.5.13';
+const APP_VERSION='7.5.14';
 const DATA_SCHEMA_VERSION=4;
 const DB_NAME='htl-praxis-db';
 const DB_STORE='app';
@@ -297,6 +297,34 @@ function isStandaloneIOS(){return /iPad|iPhone|iPod/.test(navigator.userAgent)&&
 let msalReadyPromise=null;
 async function readyMsal(){if(!msalReadyPromise){msalReadyPromise=(async()=>{const app=new msal.PublicClientApplication(msalConfig());await app.initialize?.();await app.handleRedirectPromise();msalApp=app;return app})().catch(e=>{msalReadyPromise=null;throw e})}return msalReadyPromise}
 async function getGraphToken(interactive=true){const clientId=state.settings.clientId||(window.HTL_CONFIG||{}).clientId;if(!clientId)throw new Error('Bitte zuerst unter Einstellungen die Microsoft App Client-ID eintragen.');if(!window.msal)throw new Error('Microsoft-Anmeldemodul konnte nicht geladen werden.');const app=await readyMsal();let acc=app.getAllAccounts()[0];if(!acc){if(!interactive)throw new Error('Nicht angemeldet');if(isStandaloneIOS()){await app.loginRedirect({scopes:GRAPH_SCOPES});throw new Error('Microsoft-Anmeldung wird geöffnet. Bitte danach OneDrive erneut aufrufen.')}const r=await app.loginPopup({scopes:GRAPH_SCOPES});acc=r.account}try{return(await app.acquireTokenSilent({account:acc,scopes:GRAPH_SCOPES})).accessToken}catch(e){if(!interactive)throw e;if(isStandaloneIOS()){await app.acquireTokenRedirect({scopes:GRAPH_SCOPES,account:acc});throw new Error('Microsoft-Anmeldung wird geöffnet. Bitte danach OneDrive erneut aufrufen.')}return(await app.acquireTokenPopup({scopes:GRAPH_SCOPES,account:acc})).accessToken}}
+// Explicit account reauthentication. Does not clear application or MSAL storage.
+async function reauthenticateMicrosoft(useRedirect=false){
+ if(!window.msal){alert('Microsoft-Anmeldemodul konnte nicht geladen werden.');return}
+ try{
+  const app=await readyMsal();
+  const request={scopes:GRAPH_SCOPES,prompt:'select_account'};
+  if(useRedirect||isStandaloneIOS()){
+   // Redirect is a deliberate user action; no application data is modified.
+   await app.loginRedirect(request);
+   return;
+  }
+  const result=await app.loginPopup(request);
+  if(!result?.account)throw new Error('Keine Microsoft-Anmeldung abgeschlossen.');
+  app.setActiveAccount?.(result.account);
+  // Verify token before clearing the previous authentication error.
+  await app.acquireTokenSilent({account:result.account,scopes:GRAPH_SCOPES});
+  state.sync=state.sync||{};
+  if(isMicrosoftAuthError(state.sync.lastError)){
+   state.sync.lastError='';await idbSet('state',state);
+  }
+  syncDialog();
+  alert('Microsoft-Anmeldung erfolgreich. Bitte jetzt „Jetzt abgleichen“ wählen.');
+ }catch(e){
+  const message=e?.message||String(e);
+  alert('Microsoft-Anmeldung nicht abgeschlossen: '+message+'\n\nFalls das Popup blockiert wird, „Anmeldung über Weiterleitung“ verwenden.');
+ }
+}
+function isMicrosoftAuthError(message){return /post_request_failed|failed to fetch|login\.microsoftonline\.com|interaction_required|login_required|consent_required|token/i.test(String(message||''))}
 async function graph(token,url,opts={}){const r=await fetch('https://graph.microsoft.com/v1.0'+url,{...opts,headers:{Authorization:`Bearer ${token}`,...(opts.headers||{})}});if(!r.ok){const body=await r.text();const err=new Error(`${r.status} ${body}`);err.status=r.status;throw err}const ct=r.headers.get('content-type')||'';if(r.status===204)return null;if(ct.includes('json'))return r.json();return r.text()}
 async function appRoot(token){return graph(token,'/me/drive/special/approot')}
 async function remoteMeta(token,rootId){try{return await graph(token,`/me/drive/items/${rootId}:/htl-praxis-data.json`)}catch(e){if(e.status===404)return null;throw e}}
@@ -411,10 +439,10 @@ async function syncPull({silent=false}={}){return syncNow({silent,downloadOnly:t
 async function syncPush({silent=false}={}){return syncNow({silent})}
 function scheduleAutoSync(){if(!state?.settings?.autoSync||!navigator.onLine||syncBusy)return;clearTimeout(autoSyncTimer);autoSyncTimer=setTimeout(()=>autoSyncNow(),7000)}
 async function autoSyncNow(){if(!state?.settings?.autoSync||!navigator.onLine||syncBusy)return false;return syncNow({silent:true})}
-function syncDialog(){const s=state.sync||{};openModal(`<h2>OneDrive Synchronisierung</h2><p>Automatischer 3-Wege-Abgleich: Aenderungen an verschiedenen Schuelern, Einheiten und Feldern werden zusammengefuehrt. Bei gleichzeitiger Bearbeitung desselben Feldes wird sicherheitshalber angehalten.</p><div class="system-grid"><div><b>Letzter Abgleich</b><br>${escapeHtml(s.lastSyncedAt?new Date(s.lastSyncedAt).toLocaleString('de-AT'):'noch nie')}</div><div><b>Lokale Aenderungen</b><br>${s.dirtySince?'ja':'nein'}</div><div><b>Auto-Sync</b><br>${state.settings.autoSync?'ein':'aus'}</div><div><b>Status</b><br>${escapeHtml(s.lastError?'Pruefen':'bereit')}</div></div>${s.lastError?`<div class="notice error-note">${escapeHtml(s.lastError)}</div>`:''}<div class="field"><label><input type="checkbox" id="autoSyncToggle" ${state.settings.autoSync?'checked':''}> Automatisch abgleichen (bei Aenderungen und regelmaessig)</label></div><div class="modal-actions"><button class="btn secondary" id="syncBackup">Backup exportieren</button><button class="btn secondary" id="pull">Cloud laden (nur ohne lokale Aenderungen)</button><button class="btn" id="push">Jetzt abgleichen</button></div>`);
- document.getElementById('push').onclick=()=>syncNow({silent:false});document.getElementById('pull').onclick=()=>syncPull({silent:false});document.getElementById('syncBackup').onclick=exportBackup;
+function syncDialog(){const s=state.sync||{};openModal(`<h2>OneDrive Synchronisierung</h2><p>Automatischer 3-Wege-Abgleich: Aenderungen an verschiedenen Schuelern, Einheiten und Feldern werden zusammengefuehrt. Bei gleichzeitiger Bearbeitung desselben Feldes wird sicherheitshalber angehalten.</p><div class="system-grid"><div><b>Letzter Abgleich</b><br>${escapeHtml(s.lastSyncedAt?new Date(s.lastSyncedAt).toLocaleString('de-AT'):'noch nie')}</div><div><b>Lokale Aenderungen</b><br>${s.dirtySince?'ja':'nein'}</div><div><b>Auto-Sync</b><br>${state.settings.autoSync?'ein':'aus'}</div><div><b>Status</b><br>${escapeHtml(s.lastError?'Pruefen':'bereit')}</div></div>${s.lastError?`<div class="notice error-note">${escapeHtml(s.lastError)}</div>`:''}<div class="field"><p><b>Microsoft-Anmeldung</b>: Bei abgelaufener Anmeldung hier erneut anmelden. Die lokalen Daten bleiben erhalten.</p><button type="button" class="btn secondary" id="reauthMicrosoft">Erneut bei Microsoft anmelden</button> <button type="button" class="btn secondary" id="reauthRedirect">Anmeldung über Weiterleitung</button></div><div class="field"><label><input type="checkbox" id="autoSyncToggle" ${state.settings.autoSync?'checked':''}> Automatisch abgleichen (bei Aenderungen und regelmaessig)</label></div><div class="modal-actions"><button class="btn secondary" id="syncBackup">Backup exportieren</button><button class="btn secondary" id="pull">Cloud laden (nur ohne lokale Aenderungen)</button><button class="btn" id="push">Jetzt abgleichen</button></div>`);
+ document.getElementById('push').onclick=()=>syncNow({silent:false});document.getElementById('pull').onclick=()=>syncPull({silent:false});document.getElementById('syncBackup').onclick=exportBackup;document.getElementById('reauthMicrosoft').onclick=()=>reauthenticateMicrosoft(false);document.getElementById('reauthRedirect').onclick=()=>{if(confirm('Die App wird zur Microsoft-Anmeldung weitergeleitet. Vorher bitte ein Backup exportieren, falls lokale Aenderungen vorhanden sind. Fortfahren?'))reauthenticateMicrosoft(true)};
  document.getElementById('autoSyncToggle').onchange=e=>{state.settings.autoSync=e.target.checked;saveState();if(e.target.checked)scheduleAutoSync()};}
-function updateHeaderStatus(){const el=document.getElementById('syncStatus');if(!el||!state)return;const s=state.sync||{};el.textContent=s.lastError?'OneDrive: Konflikt/Fehler':s.dirtySince?'OneDrive: lokal geaendert':s.lastSyncedAt?'OneDrive: aktuell':'OneDrive: lokal';el.className='sync-status '+(s.lastError?'bad':s.dirtySince?'':'good')}
+function updateHeaderStatus(){const el=document.getElementById('syncStatus');if(!el||!state)return;const s=state.sync||{};el.textContent=s.lastError?(isMicrosoftAuthError(s.lastError)?'OneDrive: Anmeldung erforderlich':'OneDrive: Konflikt/Fehler'):s.dirtySince?'OneDrive: lokal geaendert':s.lastSyncedAt?'OneDrive: aktuell':'OneDrive: lokal';el.className='sync-status '+(s.lastError?'bad':s.dirtySince?'':'good')}
 
 // --- PWA Updates ---
 let swRegistration=null,deferredInstallPrompt=null;
