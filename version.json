@@ -1,6 +1,6 @@
 {
-  "version": "7.5.14",
+  "version": "7.5.15",
   "dataSchema": 4,
   "released": "2026-10-12",
-  "notes": "Explizite Microsoft-Neuanmeldung (Popup oder Redirect) ohne Loeschen lokaler Daten"
+  "notes": "Gruppenansicht: Unterrichtsstoff getrennt von individuellen Abweichungen; Unterlagen/PDF-Seiten wieder sichtbar"
 }

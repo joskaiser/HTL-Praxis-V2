@@ -1,0 +1,1 @@
+7.5.15: In Einheit bearbeiten werden bestehende Unterlagen samt Seitenbereichen angezeigt und koennen geoeffnet werden. Vor dem Oeffnen werden Aenderungen gespeichert; Einheiten-ID und Seitenzuweisungen bleiben erhalten.

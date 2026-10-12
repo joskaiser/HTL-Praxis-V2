@@ -1,0 +1,1 @@
+Version 7.5.15: OneDrive-Authentifizierung nutzt das aktiv gewaehlte Microsoft-Konto statt ungeprueft des ersten Cache-Kontos. Nach Popup-/Redirect-Anmeldung wird das aktive Konto gesetzt. Der Tokenabruf wird geprueft. Keine Migration und keine Loeschung lokaler Daten. Vor Installation Backup exportieren.

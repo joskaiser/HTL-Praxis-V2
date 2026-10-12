@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION='7.5.14';
+const APP_VERSION='7.5.15';
 const DATA_SCHEMA_VERSION=4;
 const DB_NAME='htl-praxis-db';
 const DB_STORE='app';
@@ -116,7 +116,7 @@ function renderClass(cid){const c=cls(cid);if(!c)return;
 }
 function renderGroup(cid,gid,unitId){const c=cls(cid),g=c?.groups.find(x=>x.id===gid);if(!c||!g)return;
  const units=classUnits(cid,gid),u=units.find(x=>x.id===unitId)||currentUnit(cid,gid);
- view.innerHTML=`<div class="view-header"><div><h2>${escapeHtml(c.code)} · ${escapeHtml(g.name)}</h2><div class="sub">${groupStudents(cid,gid).length} Schüler · ${units.length} Einheiten</div></div><div class="toolbar"><button class="btn secondary" id="backClass">Klasse</button><button class="btn secondary" id="unitOverview">Einheitenübersicht</button><button class="btn" id="addUnit">+ Einheit</button><button class="btn secondary" id="copyUnit">Einheit aus Gruppe kopieren</button></div></div><div class="section-card"><div class="unit-bar"><b>Einheit:</b><select id="unitSelect">${units.map(x=>`<option value="${x.id}" ${u&&x.id===u.id?'selected':''}>SW ${schoolWeek(x.date)} · ${fmtDate(x.date)} · ${escapeHtml(x.topic)}</option>`).join('')}</select><button class="btn secondary" id="editUnit" ${u?'':'disabled'}>Einheit bearbeiten</button><button class="btn secondary" id="deleteUnit" ${u?'':'disabled'}>Einheit löschen</button><button class="btn secondary" id="archivedUnits">Archiv (${state.units.filter(x=>x.groupId===gid&&x.archived).length})</button></div>${u?.showNotesInOverview&&u.notes?`<div class="notice" style="margin-top:12px">${escapeHtml(u.notes)}</div>`:''}</div>${studentTable(cid,gid,u?.id)}`;
+ view.innerHTML=`<div class="view-header"><div><h2>${escapeHtml(c.code)} · ${escapeHtml(g.name)}</h2><div class="sub">${groupStudents(cid,gid).length} Schüler · ${units.length} Einheiten</div></div><div class="toolbar"><button class="btn secondary" id="backClass">Klasse</button><button class="btn secondary" id="unitOverview">Einheitenübersicht</button><button class="btn" id="addUnit">+ Einheit</button><button class="btn secondary" id="copyUnit">Einheit aus Gruppe kopieren</button></div></div><div class="section-card"><div class="unit-bar"><b>Einheit:</b><select id="unitSelect">${units.map(x=>`<option value="${x.id}" ${u&&x.id===u.id?'selected':''}>SW ${schoolWeek(x.date)} · ${fmtDate(x.date)} · ${escapeHtml(x.topic)}</option>`).join('')}</select><button class="btn secondary" id="editUnit" ${u?'':'disabled'}>Einheit bearbeiten</button><button class="btn secondary" id="deleteUnit" ${u?'':'disabled'}>Einheit löschen</button><button class="btn secondary" id="archivedUnits">Archiv (${state.units.filter(x=>x.groupId===gid&&x.archived).length})</button></div>${u?.showNotesInOverview&&u.notes?`<div class="notice" style="margin-top:12px">${escapeHtml(u.notes)}</div>`:''}</div>${u?`<div class="section-card"><b>Unterrichtsstoff:</b> ${escapeHtml(u.topic||'Kein Stoff eingetragen')}${(state.curriculum?.[cid]||[]).filter(i=>i.unitId===u.id).length?`<div class="small">Zugeordnete Stoffpunkte: ${(state.curriculum[cid]||[]).filter(i=>i.unitId===u.id).map(i=>escapeHtml(i.title)).join(' · ')}</div>`:''}</div>`:''}${studentTable(cid,gid,u?.id)}`;
  document.getElementById('backClass').onclick=()=>{route={type:'class',classId:cid};render()};document.getElementById('unitOverview').onclick=()=>{route={type:'unitOverview',classId:cid,groupId:gid};render()};document.getElementById('addUnit').onclick=()=>unitDialog(cid,null,gid);document.getElementById('copyUnit').onclick=()=>copyUnitDialog(cid,gid);document.getElementById('editUnit').onclick=()=>u&&unitDialog(cid,u.id,gid);document.getElementById('deleteUnit').onclick=()=>u&&deleteUnitDialog(cid,gid,u.id);document.getElementById('archivedUnits').onclick=()=>archivedUnitsDialog(cid,gid);
  document.getElementById('unitSelect').onchange=e=>{route.unitId=e.target.value;renderGroup(cid,gid,e.target.value)};bindStudentLinks();bindRatings();bindQuickAttendance(c,u);
 }
@@ -155,7 +155,7 @@ function copyUnitDialog(cid,gid){const options=state.units.filter(u=>!u.archived
  document.getElementById('confirmCopy').onclick=()=>{const source=state.units.find(u=>u.id===document.getElementById('copySource').value);if(!source)return;const date=document.getElementById('copyDate').value;if(!date)return alert('Datum auswählen.');const id=uid('unit');const copy=JSON.parse(JSON.stringify(source));Object.assign(copy,{id,classId:cid,groupId:gid,date});state.units.push(copy);saveState();closeModal();route={type:'group',classId:cid,groupId:gid,unitId:id};render()};
 }
 function ratingWeightLabel(cid, rubric){const w=typeof classWeights==='function'?classWeights(cid):null;const n=Number(w?.[rubric]??0);return `<span class="rating-weight">${Number.isFinite(n)?n.toLocaleString('de-AT'):0} %</span>`}
-function studentTable(cid,gid,unitId){const ss=gid?groupStudents(cid,gid):classStudents(cid),u=state.units.find(x=>x.id===unitId),c=cls(cid);return `<div class="table-wrap"><table><thead><tr><th>Schüler</th><th>Fehlstd.</th><th>Ganztags anwesend</th><th>Ganztags abwesend</th><th>kommt</th><th>geht</th>${RUBRICS.map(r=>`<th>${r} ${ratingWeightLabel(cid,r)}</th>`).join('')}<th>Stoff</th></tr></thead><tbody>${ss.map(s=>{const r=u?getRecord(s.id,u.id):null,miss=r?calcMissedUE(c,r,s.id,u?.id):0;return `<tr><td><div class="name-cell" data-student="${s.id}" data-unit="${u?.id||''}">${s.photo?`<img class="thumb" src="${s.photo}">`:`<span class="thumb avatar placeholder">${initials(s.name)}</span>`}<span>${escapeHtml(s.name)}</span></div></td><td>${totalAbsence(s.id).toFixed(1)}${r&&miss?` <span class="pill warn">+${miss.toFixed(1)}</span>`:''}</td><td>${u?`<input type="checkbox" aria-label="Ganztags anwesend" data-present="${s.id}" ${r?.present?'checked':''}>`:''}</td><td>${u?`<input type="checkbox" aria-label="Ganztags abwesend" data-absent="${s.id}" ${r?.absent?'checked':''}>`:''}</td><td>${u?`<input class="quick-time" type="time" data-arrive="${s.id}" value="${r?.arrive||''}">`:''}</td><td>${u?`<input class="quick-time" type="time" data-leave="${s.id}" value="${r?.leave||''}">`:''}</td>${RUBRICS.map(x=>`<td>${u?ratingHtml(r?.ratings?.[x],s.id,u.id,x,!!r?.absent):'–'}</td>`).join('')}<td class="wide-note">${escapeHtml(r?.topicOverride||u?.topic||'')}</td></tr>`}).join('')}</tbody></table></div>`}
+function studentTable(cid,gid,unitId){const ss=gid?groupStudents(cid,gid):classStudents(cid),u=state.units.find(x=>x.id===unitId),c=cls(cid);return `<div class="table-wrap"><table><thead><tr><th>Schüler</th><th>Fehlstd.</th><th>Ganztags anwesend</th><th>Ganztags abwesend</th><th>kommt</th><th>geht</th>${RUBRICS.map(r=>`<th>${r} ${ratingWeightLabel(cid,r)}</th>`).join('')}<th>Individueller Stoff</th></tr></thead><tbody>${ss.map(s=>{const r=u?getRecord(s.id,u.id):null,miss=r?calcMissedUE(c,r,s.id,u?.id):0;return `<tr><td><div class="name-cell" data-student="${s.id}" data-unit="${u?.id||''}">${s.photo?`<img class="thumb" src="${s.photo}">`:`<span class="thumb avatar placeholder">${initials(s.name)}</span>`}<span>${escapeHtml(s.name)}</span></div></td><td>${totalAbsence(s.id).toFixed(1)}${r&&miss?` <span class="pill warn">+${miss.toFixed(1)}</span>`:''}</td><td>${u?`<input type="checkbox" aria-label="Ganztags anwesend" data-present="${s.id}" ${r?.present?'checked':''}>`:''}</td><td>${u?`<input type="checkbox" aria-label="Ganztags abwesend" data-absent="${s.id}" ${r?.absent?'checked':''}>`:''}</td><td>${u?`<input class="quick-time" type="time" data-arrive="${s.id}" value="${r?.arrive||''}">`:''}</td><td>${u?`<input class="quick-time" type="time" data-leave="${s.id}" value="${r?.leave||''}">`:''}</td>${RUBRICS.map(x=>`<td>${u?ratingHtml(r?.ratings?.[x],s.id,u.id,x,!!r?.absent):'–'}</td>`).join('')}<td class="wide-note">${escapeHtml(r?.topicOverride||'')}${!r?.topicOverride?'<span class="small">–</span>':''}</td></tr>`}).join('')}</tbody></table></div>`}
 function ratingHtml(val,sid,uid,rubric,absent=false){return `<div class="rating ${absent?'rating-absent':''}" data-sid="${sid}" data-uid="${uid}" data-rubric="${rubric}" title="${absent?'Ganztags abwesend: keine Bewertung möglich':''}">${[1,2,3,4].map(n=>`<button class="${!absent&&val>=n?'filled':''}" data-v="${n}" title="${absent?'Abwesend':n+'/4'}" ${absent?'disabled':''}></button>`).join('')}<button class="rating-clear" data-clear="1" title="Bewertung entfernen (nicht bewertet)" ${absent?'disabled':''}>×</button></div>`}
 function bindRatings(){view.querySelectorAll('.rating').forEach(el=>el.querySelectorAll('button').forEach(b=>b.onclick=e=>{e.stopPropagation();const r=getRecord(el.dataset.sid,el.dataset.uid);if(r.absent)return;const n=Number(b.dataset.v),key=el.dataset.rubric;if(b.dataset.clear){delete r.ratings[key]}else if(r.ratings[key]===n){delete r.ratings[key]}else{r.ratings[key]=n}saveState();render()}))}
 function bindQuickAttendance(c,u){if(!u)return;
@@ -176,7 +176,10 @@ async function importCurriculumFile(file){const cid=activeCurriculumClassId;if(!
 function unitDialog(cid,unitId,gid){
  const u=state.units.find(x=>x.id===unitId);if(u&&u.groupId!==gid)return alert('Diese Einheit gehört zu einer anderen Gruppe.');
  const returningOverview=route.type==='unitOverview';
- openModal(`<h2>${u?'Einheit bearbeiten':'Einheit anlegen'}</h2><div class="form-grid"><div class="field"><label>Datum</label><input id="mDate" type="date" value="${u?.date||new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Globaler Stoff</label><input id="mTopic" value="${escapeHtml(u?.topic||'')}"></div><div class="field"><label>Meine Ankunft</label><input id="mTeacherArrive" type="time" value="${u?.teacherArrive||''}"></div><div class="field"><label>Mein Ende</label><input id="mTeacherLeave" type="time" value="${u?.teacherLeave||''}"></div></div><div class="field"><label>Notiz</label><textarea id="mNotes">${escapeHtml(u?.notes||'')}</textarea></div><div class="field"><label><input type="checkbox" id="mShowNotes" ${u?.showNotesInOverview?'checked':''}> Notiz in der Gruppenübersicht anzeigen</label></div><div class="field"><label>Abweichende Unterrichtszeiten nur für diese Einheit (optional)</label><label><input type="checkbox" id="mUnitCustomTime" ${u?.scheduleBlocks?'checked':''}> Individuelle Zeitblöcke</label><div id="unitTimeEditor" style="display:${u?.scheduleBlocks?'block':'none'}">${timeBlockEditor(u?.scheduleBlocks||classSchedule(cls(cid)).blocks,'unitTimeBlocks')}</div></div>${u?`<div class="modal-actions"><button class="btn secondary" id="mUnitMaterials">Speichern und Skriptseiten / Fotos / Skizzen öffnen</button></div>`:''}<div class="modal-actions"><button class="btn secondary" onclick="document.getElementById('modal').close()">Abbrechen</button><button class="btn" id="mSave">Speichern</button></div>`);
+ // Existing links are keyed by the stable unit ID. Never recreate them when editing.
+ const existingLinks=u?(state.unitLinks?.[u.id]||[]):[];
+ const assignedMarkup=u?`<div class="section-card" id="mExistingMaterials"><b>Bereits zugewiesene Unterlagen (${existingLinks.length})</b>${existingLinks.length?existingLinks.map((link,i)=>{const doc=(state.library||[]).find(d=>d.id===link.docId);return `<div class="schedule-block"><div><b>${escapeHtml(doc?.name||'Datei nicht im Verzeichnis gefunden')}</b><div class="small">${escapeHtml(link.pages?'Seiten: '+link.pages:'Gesamtes Dokument')}${link.notes?' · '+escapeHtml(link.notes):''}</div></div><button type="button" class="btn secondary" data-existing-material="${i}" ${doc?'':'disabled'}>Öffnen</button></div>`}).join(''):'<div class="small">Noch keine Unterlagen zugewiesen.</div>'}</div>`:'';
+ openModal(`<h2>${u?'Einheit bearbeiten':'Einheit anlegen'}</h2><div class="form-grid"><div class="field"><label>Datum</label><input id="mDate" type="date" value="${u?.date||new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Globaler Stoff</label><input id="mTopic" value="${escapeHtml(u?.topic||'')}"></div><div class="field"><label>Meine Ankunft</label><input id="mTeacherArrive" type="time" value="${u?.teacherArrive||''}"></div><div class="field"><label>Mein Ende</label><input id="mTeacherLeave" type="time" value="${u?.teacherLeave||''}"></div></div><div class="field"><label>Notiz</label><textarea id="mNotes">${escapeHtml(u?.notes||'')}</textarea></div><div class="field"><label><input type="checkbox" id="mShowNotes" ${u?.showNotesInOverview?'checked':''}> Notiz in der Gruppenübersicht anzeigen</label></div><div class="field"><label>Abweichende Unterrichtszeiten nur für diese Einheit (optional)</label><label><input type="checkbox" id="mUnitCustomTime" ${u?.scheduleBlocks?'checked':''}> Individuelle Zeitblöcke</label><div id="unitTimeEditor" style="display:${u?.scheduleBlocks?'block':'none'}">${timeBlockEditor(u?.scheduleBlocks||classSchedule(cls(cid)).blocks,'unitTimeBlocks')}</div></div>${assignedMarkup}${u?`<div class="modal-actions"><button class="btn secondary" id="mUnitMaterials">Speichern und Skriptseiten / Fotos / Skizzen öffnen</button></div>`:''}<div class="modal-actions"><button class="btn secondary" onclick="document.getElementById('modal').close()">Abbrechen</button><button class="btn" id="mSave">Speichern</button></div>`);
  bindBlockEditor('unitTimeBlocks');document.getElementById('mUnitCustomTime').onchange=e=>document.getElementById('unitTimeEditor').style.display=e.target.checked?'block':'none';
  function commit(openMaterials=false){
   const date=document.getElementById('mDate').value;
@@ -191,6 +194,18 @@ function unitDialog(cid,unitId,gid){
  }
  document.getElementById('mSave').onclick=()=>commit(false);
  if(u)document.getElementById('mUnitMaterials').onclick=()=>commit(true);
+ if(u)document.querySelectorAll('[data-existing-material]').forEach(button=>button.onclick=()=>{
+  // Save edits before opening a file, so neither changes nor page assignments are lost.
+  const link=existingLinks[Number(button.dataset.existingMaterial)];
+  const doc=(state.library||[]).find(d=>d.id===link?.docId);
+  if(!doc)return alert('Die Datei ist derzeit nicht im Verzeichnis verfügbar. Bitte OneDrive-Dateien einlesen.');
+  const date=document.getElementById('mDate').value;
+  if(!date)return alert('Bitte ein gültiges Datum auswählen.');
+  const changes={date,topic:document.getElementById('mTopic').value.trim()||'Einheit',notes:document.getElementById('mNotes').value,showNotesInOverview:document.getElementById('mShowNotes').checked,teacherArrive:document.getElementById('mTeacherArrive').value,teacherLeave:document.getElementById('mTeacherLeave').value};
+  if(document.getElementById('mUnitCustomTime').checked){const blocks=readBlockEditor('unitTimeBlocks');if(!validBlocks(blocks))return alert('Ungültige Unterrichtszeiten');changes.scheduleBlocks=blocks}else changes.scheduleBlocks=null;
+  Object.assign(u,changes);saveState();
+  openLibraryFile(doc);
+ });
 }
 function renderUnitOverview(cid,gid){
  const c=cls(cid),g=c?.groups.find(x=>x.id===gid);if(!c||!g)return;
@@ -295,8 +310,40 @@ function msalConfig(){const cfg=window.HTL_CONFIG||{};return{auth:{clientId:stat
 // iOS home-screen apps cannot reliably open MSAL popups. Use full-page redirect there.
 function isStandaloneIOS(){return /iPad|iPhone|iPod/.test(navigator.userAgent)&& (navigator.standalone===true || window.matchMedia('(display-mode: standalone)').matches)}
 let msalReadyPromise=null;
-async function readyMsal(){if(!msalReadyPromise){msalReadyPromise=(async()=>{const app=new msal.PublicClientApplication(msalConfig());await app.initialize?.();await app.handleRedirectPromise();msalApp=app;return app})().catch(e=>{msalReadyPromise=null;throw e})}return msalReadyPromise}
-async function getGraphToken(interactive=true){const clientId=state.settings.clientId||(window.HTL_CONFIG||{}).clientId;if(!clientId)throw new Error('Bitte zuerst unter Einstellungen die Microsoft App Client-ID eintragen.');if(!window.msal)throw new Error('Microsoft-Anmeldemodul konnte nicht geladen werden.');const app=await readyMsal();let acc=app.getAllAccounts()[0];if(!acc){if(!interactive)throw new Error('Nicht angemeldet');if(isStandaloneIOS()){await app.loginRedirect({scopes:GRAPH_SCOPES});throw new Error('Microsoft-Anmeldung wird geöffnet. Bitte danach OneDrive erneut aufrufen.')}const r=await app.loginPopup({scopes:GRAPH_SCOPES});acc=r.account}try{return(await app.acquireTokenSilent({account:acc,scopes:GRAPH_SCOPES})).accessToken}catch(e){if(!interactive)throw e;if(isStandaloneIOS()){await app.acquireTokenRedirect({scopes:GRAPH_SCOPES,account:acc});throw new Error('Microsoft-Anmeldung wird geöffnet. Bitte danach OneDrive erneut aufrufen.')}return(await app.acquireTokenPopup({scopes:GRAPH_SCOPES,account:acc})).accessToken}}
+async function readyMsal(){if(!msalReadyPromise){msalReadyPromise=(async()=>{const app=new msal.PublicClientApplication(msalConfig());await app.initialize?.();const redirectResult=await app.handleRedirectPromise();if(redirectResult?.account)app.setActiveAccount?.(redirectResult.account);msalApp=app;return app})().catch(e=>{msalReadyPromise=null;throw e})}return msalReadyPromise}
+// Prefer the account chosen by the user; never silently switch back to the first cached account.
+function selectedMicrosoftAccount(app){
+ const active=app.getActiveAccount?.();
+ if(active)return active;
+ const accounts=app.getAllAccounts();
+ if(accounts.length===1){app.setActiveAccount?.(accounts[0]);return accounts[0]}
+ return null;
+}
+async function getGraphToken(interactive=true){
+ const clientId=state.settings.clientId||(window.HTL_CONFIG||{}).clientId;
+ if(!clientId)throw new Error('Bitte zuerst unter Einstellungen die Microsoft App Client-ID eintragen.');
+ if(!window.msal)throw new Error('Microsoft-Anmeldemodul konnte nicht geladen werden.');
+ const app=await readyMsal();let acc=selectedMicrosoftAccount(app);
+ if(!acc){
+  if(!interactive)throw new Error('Microsoft-Anmeldung erforderlich: Bitte das Konto im OneDrive-Fenster auswaehlen.');
+  if(isStandaloneIOS()){await app.loginRedirect({scopes:GRAPH_SCOPES,prompt:'select_account'});return null}
+  const result=await app.loginPopup({scopes:GRAPH_SCOPES,prompt:'select_account'});
+  acc=result.account;app.setActiveAccount?.(acc);
+  if(result.accessToken)return result.accessToken;
+ }
+ try{
+  const result=await app.acquireTokenSilent({account:acc,scopes:GRAPH_SCOPES});
+  if(!result?.accessToken)throw new Error('Microsoft hat kein Zugriffstoken geliefert.');
+  return result.accessToken;
+ }catch(e){
+  if(!interactive)throw e;
+  if(isStandaloneIOS()){await app.acquireTokenRedirect({scopes:GRAPH_SCOPES,account:acc});return null}
+  const result=await app.acquireTokenPopup({scopes:GRAPH_SCOPES,account:acc});
+  if(!result?.accessToken)throw new Error('Microsoft hat kein Zugriffstoken geliefert.');
+  app.setActiveAccount?.(result.account||acc);
+  return result.accessToken;
+ }
+}
 // Explicit account reauthentication. Does not clear application or MSAL storage.
 async function reauthenticateMicrosoft(useRedirect=false){
  if(!window.msal){alert('Microsoft-Anmeldemodul konnte nicht geladen werden.');return}
@@ -312,7 +359,8 @@ async function reauthenticateMicrosoft(useRedirect=false){
   if(!result?.account)throw new Error('Keine Microsoft-Anmeldung abgeschlossen.');
   app.setActiveAccount?.(result.account);
   // Verify token before clearing the previous authentication error.
-  await app.acquireTokenSilent({account:result.account,scopes:GRAPH_SCOPES});
+  const verified=await app.acquireTokenSilent({account:result.account,scopes:GRAPH_SCOPES});
+  if(!verified?.accessToken)throw new Error('Kein gueltiges Zugriffstoken erhalten.');
   state.sync=state.sync||{};
   if(isMicrosoftAuthError(state.sync.lastError)){
    state.sync.lastError='';await idbSet('state',state);
@@ -373,7 +421,9 @@ async function syncNow({silent=false,downloadOnly=false,resolutions={}}={}){
  syncBusy=true;
  const before=dataFingerprint(state);
  try{
-  const token=await getGraphToken(!silent),root=await appRoot(token),meta=await remoteMeta(token,root.id);
+  const token=await getGraphToken(!silent);
+  if(!token)return false; // Redirect-Anmeldung laeuft; kein Zugriff auf Daten
+  const root=await appRoot(token),meta=await remoteMeta(token,root.id);
   let base=await getSyncBase();
   if(!meta){
    if(downloadOnly){if(!silent)alert('Noch kein Datenbestand in OneDrive.');return false}

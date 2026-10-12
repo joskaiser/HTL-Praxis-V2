@@ -17,6 +17,14 @@
  }
  const base=renderClass;
  renderClass=function(cid,unitId){base(cid,unitId);const u=state.units.find(x=>x.id===unitId&&x.classId===cid)||currentUnit(cid);if(u)renderMaterials(cid,u.id)};
+ // Seit v7.5.11 liegen Unterrichtseinheiten in Gruppen, nicht in der Klassenansicht.
+ // Die bestehende Zuordnung state.unitLinks[unit.id] wird nur gelesen, nie ersetzt.
+ const baseGroup=renderGroup;
+ renderGroup=function(cid,gid,unitId){
+  baseGroup(cid,gid,unitId);
+  const u=classUnits(cid,gid).find(x=>x.id===unitId)||currentUnit(cid,gid);
+  if(u)renderMaterials(cid,u.id);
+ };
  const pageKey=(unit,doc,page)=>`${unit}::${doc}::${page}`;
  const getAnnotation=(unit,doc,page)=>{state.lessonPageNotes757 ||= {};return state.lessonPageNotes757[pageKey(unit,doc,page)]||{text:'',strokes:[]}};
  let session=0;

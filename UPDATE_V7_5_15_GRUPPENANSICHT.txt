@@ -1,0 +1,1 @@
+Version 7.5.15 - Gruppenansicht korrigiert. Stoff pro Einheit separat; Schueler-Spalte nur individuelle Abweichungen. Unterrichtsunterlagen inklusive PDF-Seiten in der Gruppenansicht wieder sichtbar. Bestehende IDs, Links und Daten unveraendert.
