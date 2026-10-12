@@ -2,7 +2,7 @@ const CACHE='htl-praxis-v7.5.13-unit-overview-save';
 const ASSETS=['./','./index.html','./styles.css','./app.js','./extra.js','./room.js','./media755.js','./pages756.js','./lesson757.js','./config.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
-  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)));
+  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));
 });
 
 self.addEventListener('activate',event=>{
@@ -27,13 +27,9 @@ self.addEventListener('fetch',event=>{
     event.respondWith(fetch(event.request).catch(()=>caches.match(event.request)));
     return;
   }
-  event.respondWith(
-    caches.match(event.request).then(cached=>{
-      const network=fetch(event.request).then(resp=>{
-        if(resp&&resp.ok){const copy=resp.clone();caches.open(CACHE).then(c=>c.put(event.request,copy));}
-        return resp;
-      }).catch(()=>cached);
-      return cached||network;
-    })
-  );
+  // Prefer fresh files while online; keep offline support as fallback.
+  event.respondWith(fetch(event.request).then(resp=>{
+    if(resp && resp.ok){const copy=resp.clone();caches.open(CACHE).then(c=>c.put(event.request,copy));}
+    return resp;
+  }).catch(()=>caches.match(event.request)));
 });
