@@ -1,0 +1,1 @@
+Version 7.5.16: Gruppenauswertung direkt aus Gruppenansicht und Einheitenübersicht. Berichte berücksichtigen nur aktive Einheiten der ausgewählten Gruppe. Gruppenwechsel aktualisiert Einheitenliste und Berichte. Keine Änderung am Datenschema oder Schülerdaten.

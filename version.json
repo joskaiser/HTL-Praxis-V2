@@ -1,6 +1,6 @@
 {
-  "version": "7.5.15",
+  "version": "7.5.16",
   "dataSchema": 4,
   "released": "2026-10-12",
-  "notes": "Gruppenansicht: Unterrichtsstoff getrennt von individuellen Abweichungen; Unterlagen/PDF-Seiten wieder sichtbar"
+  "notes": "Gruppenauswertung: aktuelle gruppenspezifische Einheiten und direkter Aufruf aus Gruppe und Einheitenübersicht"
 }
