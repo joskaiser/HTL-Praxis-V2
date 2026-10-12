@@ -1,0 +1,1 @@
+7.5.13: Gruppenbezogene Einheitenuebersicht mit Mehrfachauswahl, gemeinsamer Bearbeitung und Loesch-/Archivfunktion. Beim Wechsel zu Skriptseiten werden offene Einheitenaenderungen gespeichert. Bestehende PDF-Seitenzuweisungen bleiben ueber unveraenderte Einheiten-IDs erhalten. Vor Deployment OneDrive synchronisieren und Backup exportieren.

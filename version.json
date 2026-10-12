@@ -1,1 +1,6 @@
-{"version": "7.5.12", "dataSchema": 4, "released": "2026-10-11", "notes": "Einheiten löschen oder bei vorhandenen Daten archivieren; Pausen zwischen Unterrichtsblöcken sichtbar"}
+{
+  "version": "7.5.13",
+  "dataSchema": 4,
+  "released": "2026-10-12",
+  "notes": "Einheitenuebersicht mit Mehrfachauswahl; Speichern vor Materialwechsel; PDF-Seitenzuweisungen bleiben erhalten"
+}
