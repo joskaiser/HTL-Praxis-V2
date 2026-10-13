@@ -1,0 +1,1 @@
+7.5.19 Login-Fix: Anmeldung am App-Eingang nutzt Microsoft-Weiterleitung statt Popup. Verhindert verschachtelte MSAL-Popups. Keine Änderung an lokalen Schülerdaten oder OneDrive-Synchronisierung.

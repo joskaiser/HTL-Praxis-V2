@@ -400,37 +400,40 @@ async function requireMicrosoftLogin(){
  const overlay=document.getElementById('authGate');
  const message=document.getElementById('authMessage');
  const login=document.getElementById('authLogin');
- overlay.hidden=false;
- document.body.classList.add('auth-locked');
- const attempt=async(interactive)=>{
-  login.disabled=true;
-  message.textContent='Microsoft-Anmeldung wird geprüft …';
-  try{
-   if(!window.msal)throw new Error('Microsoft-Anmeldemodul nicht verfügbar. Bitte Internetverbindung prüfen.');
-   const app=await readyMsal();
-   let account=selectedMicrosoftAccount(app);
-   if(!account && !interactive)throw new Error('Bitte mit deinem Microsoft-Konto anmelden.');
-   let token;
-   if(interactive){token=await getGraphToken(true);account=selectedMicrosoftAccount(app)}
-   else {const result=await app.acquireTokenSilent({account,scopes:GRAPH_SCOPES});token=result.accessToken}
-   if(!token)return; // Redirect login in progress
-   const expectedTenant=(window.HTL_CONFIG||{}).tenantId;
-   if(expectedTenant && expectedTenant!=='common' && String(account?.tenantId||'').toLowerCase()!==String(expectedTenant).toLowerCase())throw new Error('Dieses Microsoft-Konto gehört nicht zum freigegebenen Mandanten.');
-   // Optional explicit account allowlist; tenant membership alone is not user authorization.
-   const allowed=(window.HTL_CONFIG||{}).allowedUsernames;
-   if(Array.isArray(allowed)&&allowed.length && !allowed.some(u=>String(u).toLowerCase()===String(account?.username||'').toLowerCase()))throw new Error('Dieses Konto ist für i-i_Doku nicht freigegeben.');
-   overlay.hidden=true;document.body.classList.remove('auth-locked');
-  }catch(e){message.textContent=e.message||String(e);login.disabled=false;return false}
-  return true;
- };
- login.onclick=()=>attempt(true);
- if(!(await attempt(false))){
-  // Wait for explicit login; never load IndexedDB before authentication.
-  await new Promise(resolve=>{
-   const previous=login.onclick;
-   login.onclick=async()=>{if(await attempt(true))resolve()};
-  });
+ overlay.hidden=false;document.body.classList.add('auth-locked');
+ login.disabled=true;
+ message.textContent='Microsoft-Anmeldung wird geprüft …';
+ try{
+  if(!window.msal)throw new Error('Microsoft-Anmeldemodul nicht verfügbar. Bitte Internetverbindung prüfen.');
+  const app=await readyMsal();
+  const account=selectedMicrosoftAccount(app);
+  if(!account)throw new Error('Bitte mit deinem Microsoft-Konto anmelden.');
+  const result=await app.acquireTokenSilent({account,scopes:GRAPH_SCOPES});
+  if(!result?.accessToken)throw new Error('Kein gültiges Zugriffstoken.');
+  const expectedTenant=(window.HTL_CONFIG||{}).tenantId;
+  if(expectedTenant && expectedTenant!=='common' && String(account.tenantId||'').toLowerCase()!==String(expectedTenant).toLowerCase())throw new Error('Dieses Microsoft-Konto gehört nicht zum freigegebenen Mandanten.');
+  const allowed=(window.HTL_CONFIG||{}).allowedUsernames;
+  if(Array.isArray(allowed)&&allowed.length&&!allowed.some(u=>String(u).toLowerCase()===String(account.username||'').toLowerCase()))throw new Error('Dieses Konto ist für i-i_Doku nicht freigegeben.');
+  overlay.hidden=true;document.body.classList.remove('auth-locked');
+  return;
+ }catch(e){
+  message.textContent=e?.message||String(e);
  }
+ // Redirect instead of popup: the callback points to this same page, so a popup
+ // would otherwise run the entire app inside the MSAL authentication window.
+ login.disabled=false;
+ login.onclick=async()=>{
+  login.disabled=true;
+  message.textContent='Weiterleitung zur Microsoft-Anmeldung …';
+  try{
+   const app=await readyMsal();
+   await app.loginRedirect({scopes:GRAPH_SCOPES,prompt:'select_account'});
+  }catch(e){
+   message.textContent='Anmeldung konnte nicht gestartet werden: '+(e?.message||String(e));
+   login.disabled=false;
+  }
+ };
+ await new Promise(()=>{}); // boot resumes only after successful redirect on page reload
 }
 function lockApplication(){location.reload()}
 // Explicit account reauthentication. Does not clear application or MSAL storage.
