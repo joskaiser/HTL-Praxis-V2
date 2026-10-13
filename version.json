@@ -1,6 +1,6 @@
 {
-  "version": "7.5.18",
+  "version": "7.5.19",
   "dataSchema": 4,
   "released": "2026-10-13",
-  "notes": "Option Ganzer Tag anwesend entfernt; Ganztags abwesend und Zeit-/Fehlstundenberechnung bleiben erhalten."
+  "notes": "Schüler-, Bewertungs- und Werkstückfotos als anklickbare Miniaturen in Gruppen- und Einzelauswertung sowie PDF-Druck; Datenformat unverändert."
 }

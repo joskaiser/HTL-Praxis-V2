@@ -1,0 +1,7 @@
+Version 7.5.19 – Fotominiaturen in der Auswertung
+
+- Gruppenauswertung: zusätzliche Fotospalte je Schüler, mit Schülerfoto und sämtlichen zugehörigen Bewertungs- und Werkstückfotos aus den ausgewählten Einheiten.
+- Einzelauswertung: Fotospalte je Unterrichtseinheit, inklusive Schülerfoto, Bewertungs- und Werkstückfotos.
+- Miniaturen liegen nebeneinander, sind per Maus oder Tastatur anklickbar und werden beim Drucken / Speichern als PDF mitgedruckt.
+- Keine Datenmigration, keine Änderungen an Bewertungen, Berechnung oder OneDrive-Synchronisierung.
+- Installation: kompletten Projektordner ersetzen bzw. ins bestehende GitHub-Repository einspielen; vorhandene lokal/OneDrive gespeicherte Daten nicht löschen.
