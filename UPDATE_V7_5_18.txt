@@ -1,0 +1,1 @@
+Version 7.5.18: Die Option "Ganzer Tag anwesend" wurde aus Gruppen-Bewertungstabelle und Schueleransicht entfernt. Vorhandene alte Anwesenheitsmarkierungen werden beim Laden ignoriert und bereinigt. Ganztags abwesend, kommt/geht und Fehlstundenberechnung bleiben bestehen. Vor Update Datenbackup erstellen.

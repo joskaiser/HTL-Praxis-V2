@@ -1,0 +1,1 @@
+7.5.17: Bewertungsskala 1-10 (0=unbewertet), Zusatzpunkte pro Schueler/Einheit, fixierte Tabellenkoepfe und Schuelerspalte. Bestehende Punkte werden beim Laden einmalig x2,5 umgerechnet; vor Installation Backup erstellen.
