@@ -6,17 +6,24 @@
   <meta name="theme-color" content="#233747" />
   <title>HTL Praxis</title>
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="stylesheet" href="styles.css?v=7.5.19-reportphotos1" />
+  <link rel="stylesheet" href="styles.css?v=7.5.19-auth1" />
   <script src="config.js"></script>
   <script src="msal-browser.min.js" defer></script>
-  <script src="app.js?v=7.5.19-reportphotos1" defer></script>
-  <script src="extra.js?v=7.5.19-reportphotos1" defer></script>
-  <script src="room.js?v=7.5.19-reportphotos1" defer></script>
-  <script src="media755.js?v=7.5.19-reportphotos1" defer></script>
-  <script src="pages756.js?v=7.5.19-reportphotos1" defer></script>
-  <script src="lesson757.js?v=7.5.19-reportphotos1" defer></script>
+  <script src="app.js?v=7.5.19-auth1" defer></script>
+  <script src="extra.js?v=7.5.19-auth1" defer></script>
+  <script src="room.js?v=7.5.19-auth1" defer></script>
+  <script src="media755.js?v=7.5.19-auth1" defer></script>
+  <script src="pages756.js?v=7.5.19-auth1" defer></script>
+  <script src="lesson757.js?v=7.5.19-auth1" defer></script>
 </head>
-<body>
+<body class="auth-locked">
+  <div id="authGate" class="auth-gate" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="auth-panel"><h2 id="authTitle">i-i_Doku – Anmeldung</h2>
+    <p>Zum Schutz der Schülerdaten ist eine Microsoft-Anmeldung erforderlich.</p>
+    <p>Falls für dein Microsoft-Konto eingerichtet, kannst du dich mit Face ID, Fingerabdruck oder Geräte-PIN über einen Passkey anmelden.</p>
+    <p id="authMessage" role="status">Anmeldung wird geprüft …</p>
+    <button id="authLogin" class="btn">Mit Microsoft anmelden</button></div>
+  </div>
   <header class="topbar">
     <div>
       <div class="eyebrow">HTL1 Bau und Design</div>
@@ -25,6 +32,7 @@
     <div class="top-actions">
       <button id="btnInstall" class="btn secondary" hidden>App installieren</button>
       <span id="syncStatus" class="sync-status">OneDrive: lokal</span>
+      <button id="btnLock" class="btn secondary">Sperren</button>
       <button id="btnSync" class="btn secondary">OneDrive</button>
       <button id="btnSettings" class="btn">Einstellungen</button>
     </div>

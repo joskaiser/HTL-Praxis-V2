@@ -132,3 +132,11 @@ code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em;o
  .report-page .report-table tr{break-inside:avoid-page}
  .report-page .report-table td{vertical-align:top}
 }
+
+/* Authentication gate: no local student data is rendered before login. */
+.auth-locked .topbar,.auth-locked .update-banner,.auth-locked .app-shell,.auth-locked dialog{display:none!important}
+.auth-gate[hidden]{display:none!important}
+.auth-gate{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:#edf1f5;padding:18px}
+.auth-panel{background:white;color:#233747;max-width:460px;width:100%;border-radius:14px;padding:30px;box-shadow:0 12px 35px #0002}
+.auth-panel h2{margin-top:0}
+#authMessage{font-size:.9rem;color:#5b6370;overflow-wrap:anywhere}

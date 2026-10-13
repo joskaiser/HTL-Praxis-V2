@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION='7.5.18';
+const APP_VERSION='7.5.19';
 const DATA_SCHEMA_VERSION=4;
 const DB_NAME='htl-praxis-db';
 const DB_STORE='app';
@@ -394,6 +394,45 @@ async function getGraphToken(interactive=true){
   return result.accessToken;
  }
 }
+// The public GitHub Pages shell is not a security boundary. Keep all application UI
+// hidden until Microsoft has issued a valid access token for the configured tenant.
+async function requireMicrosoftLogin(){
+ const overlay=document.getElementById('authGate');
+ const message=document.getElementById('authMessage');
+ const login=document.getElementById('authLogin');
+ overlay.hidden=false;
+ document.body.classList.add('auth-locked');
+ const attempt=async(interactive)=>{
+  login.disabled=true;
+  message.textContent='Microsoft-Anmeldung wird geprüft …';
+  try{
+   if(!window.msal)throw new Error('Microsoft-Anmeldemodul nicht verfügbar. Bitte Internetverbindung prüfen.');
+   const app=await readyMsal();
+   let account=selectedMicrosoftAccount(app);
+   if(!account && !interactive)throw new Error('Bitte mit deinem Microsoft-Konto anmelden.');
+   let token;
+   if(interactive){token=await getGraphToken(true);account=selectedMicrosoftAccount(app)}
+   else {const result=await app.acquireTokenSilent({account,scopes:GRAPH_SCOPES});token=result.accessToken}
+   if(!token)return; // Redirect login in progress
+   const expectedTenant=(window.HTL_CONFIG||{}).tenantId;
+   if(expectedTenant && expectedTenant!=='common' && String(account?.tenantId||'').toLowerCase()!==String(expectedTenant).toLowerCase())throw new Error('Dieses Microsoft-Konto gehört nicht zum freigegebenen Mandanten.');
+   // Optional explicit account allowlist; tenant membership alone is not user authorization.
+   const allowed=(window.HTL_CONFIG||{}).allowedUsernames;
+   if(Array.isArray(allowed)&&allowed.length && !allowed.some(u=>String(u).toLowerCase()===String(account?.username||'').toLowerCase()))throw new Error('Dieses Konto ist für i-i_Doku nicht freigegeben.');
+   overlay.hidden=true;document.body.classList.remove('auth-locked');
+  }catch(e){message.textContent=e.message||String(e);login.disabled=false;return false}
+  return true;
+ };
+ login.onclick=()=>attempt(true);
+ if(!(await attempt(false))){
+  // Wait for explicit login; never load IndexedDB before authentication.
+  await new Promise(resolve=>{
+   const previous=login.onclick;
+   login.onclick=async()=>{if(await attempt(true))resolve()};
+  });
+ }
+}
+function lockApplication(){location.reload()}
 // Explicit account reauthentication. Does not clear application or MSAL storage.
 async function reauthenticateMicrosoft(useRedirect=false){
  if(!window.msal){alert('Microsoft-Anmeldemodul konnte nicht geladen werden.');return}
@@ -548,15 +587,15 @@ function updateHeaderStatus(){const el=document.getElementById('syncStatus');if(
 let swRegistration=null,deferredInstallPrompt=null;
 function showUpdateBanner(version){const b=document.getElementById('updateBanner');if(!b)return;document.getElementById('updateText').textContent=`Neue Version ${version||''} verfügbar`;b.hidden=false}
 function hideUpdateBanner(){const b=document.getElementById('updateBanner');if(b)b.hidden=true}
-async function checkForUpdates(silent=true){try{const r=await fetch(`./version.json?t=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw new Error('Versionsdatei nicht erreichbar');const v=await r.json();if(v.version&&v.version!==APP_VERSION){showUpdateBanner(v.version);if(swRegistration)await swRegistration.update();if(!silent)alert(`Neue Version ${v.version} ist verfügbar.`)}else if(!silent)alert(`HTL Praxis ist aktuell (Version ${APP_VERSION}).`)}catch(e){if(!silent)alert('Updateprüfung nicht möglich: '+e.message)}}
+async function checkForUpdates(silent=true){try{const r=await fetch(`./version.json?t=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw new Error('Versionsdatei nicht erreichbar');const v=await r.json();if(v.version&&v.version!==APP_VERSION){showUpdateBanner(v.version);if(swRegistration)await swRegistration.update();if(!silent)alert(`Neue Version ${v.version} ist verfügbar.`)}else {hideUpdateBanner();if(!silent)alert(`HTL Praxis ist aktuell (Version ${APP_VERSION}).`)}}catch(e){if(!silent)alert('Updateprüfung nicht möglich: '+e.message)}}
 async function applyUpdate(){if(swRegistration){await swRegistration.update();if(swRegistration.waiting){swRegistration.waiting.postMessage({type:'SKIP_WAITING'});return}const installing=swRegistration.installing;if(installing){installing.addEventListener('statechange',()=>{if(installing.state==='installed')installing.postMessage({type:'SKIP_WAITING'})});return}}location.reload()}
 async function initPwa(){if(!('serviceWorker'in navigator)||location.protocol==='file:')return;try{swRegistration=await navigator.serviceWorker.register('./sw.js');navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload());swRegistration.addEventListener('updatefound',()=>{const w=swRegistration.installing;if(!w)return;w.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller)showUpdateBanner('')})});setTimeout(()=>checkForUpdates(true),2500);setInterval(()=>checkForUpdates(true),30*60*1000)}catch(e){console.warn('Service worker',e)}}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;const b=document.getElementById('btnInstall');if(b)b.hidden=false});
 window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;const b=document.getElementById('btnInstall');if(b)b.hidden=true});
 
 // UI bindings
-function bindUi(){document.getElementById('btnDashboard').onclick=()=>{route={type:'dashboard'};render()};document.getElementById('btnImport').onclick=importDialog;document.getElementById('btnSettings').onclick=settingsDialog;document.getElementById('btnSync').onclick=syncDialog;document.getElementById('btnAddClass').onclick=addClassDialog;document.getElementById('yearSelect').onchange=e=>{state.activeYear=e.target.value;saveState();route={type:'dashboard'};render()};document.getElementById('fileImport').onchange=e=>{if(e.target.files[0])importCsv(e.target.files[0]);e.target.value=''};document.getElementById('curriculumImport').onchange=e=>{if(e.target.files[0])importCurriculumFile(e.target.files[0]);e.target.value=''};document.getElementById('photoPicker').onchange=e=>{if(e.target.files[0])processPhoto(e.target.files[0]);e.target.value=''};document.getElementById('btnInstall').onclick=async()=>{if(deferredInstallPrompt){deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;document.getElementById('btnInstall').hidden=true}else alert('Im Browser-Menü „App installieren“ bzw. am Handy „Zum Startbildschirm hinzufügen“ wählen.')};document.getElementById('applyUpdate').onclick=applyUpdate;document.getElementById('dismissUpdate').onclick=hideUpdateBanner}
-async function boot(){state=await loadState();applySchoolBranding();bindUi();render();updateHeaderStatus();await initPwa();window.addEventListener('online',()=>{updateHeaderStatus();if(state.settings.autoSync)autoSyncNow()});window.addEventListener('offline',updateHeaderStatus);window.addEventListener('focus',()=>{if(state.settings.autoSync)autoSyncNow()});setInterval(()=>{if(state.settings.autoSync&&navigator.onLine)autoSyncNow()},60000);if(state.settings.autoSync&&navigator.onLine)setTimeout(()=>autoSyncNow(),1500)}
+function bindUi(){document.getElementById('btnLock').onclick=lockApplication;document.getElementById('btnDashboard').onclick=()=>{route={type:'dashboard'};render()};document.getElementById('btnImport').onclick=importDialog;document.getElementById('btnSettings').onclick=settingsDialog;document.getElementById('btnSync').onclick=syncDialog;document.getElementById('btnAddClass').onclick=addClassDialog;document.getElementById('yearSelect').onchange=e=>{state.activeYear=e.target.value;saveState();route={type:'dashboard'};render()};document.getElementById('fileImport').onchange=e=>{if(e.target.files[0])importCsv(e.target.files[0]);e.target.value=''};document.getElementById('curriculumImport').onchange=e=>{if(e.target.files[0])importCurriculumFile(e.target.files[0]);e.target.value=''};document.getElementById('photoPicker').onchange=e=>{if(e.target.files[0])processPhoto(e.target.files[0]);e.target.value=''};document.getElementById('btnInstall').onclick=async()=>{if(deferredInstallPrompt){deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;document.getElementById('btnInstall').hidden=true}else alert('Im Browser-Menü „App installieren“ bzw. am Handy „Zum Startbildschirm hinzufügen“ wählen.')};document.getElementById('applyUpdate').onclick=applyUpdate;document.getElementById('dismissUpdate').onclick=hideUpdateBanner}
+async function boot(){state=makeInitialState();await requireMicrosoftLogin();state=await loadState();applySchoolBranding();bindUi();render();updateHeaderStatus();await initPwa();window.addEventListener('online',()=>{updateHeaderStatus();if(state.settings.autoSync)autoSyncNow()});window.addEventListener('offline',updateHeaderStatus);window.addEventListener('focus',()=>{if(state.settings.autoSync)autoSyncNow()});setInterval(()=>{if(state.settings.autoSync&&navigator.onLine)autoSyncNow()},60000);if(state.settings.autoSync&&navigator.onLine)setTimeout(()=>autoSyncNow(),1500)}
 boot();
 
 
