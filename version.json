@@ -1,6 +1,6 @@
 {
-  "version": "7.5.16",
+  "version": "7.5.17",
   "dataSchema": 4,
   "released": "2026-10-12",
-  "notes": "Gruppenauswertung: aktuelle gruppenspezifische Einheiten und direkter Aufruf aus Gruppe und Einheitenübersicht"
+  "notes": "Schülerfotos und Beschriftungen bleiben bei gedrehten Tischen aufrecht"
 }

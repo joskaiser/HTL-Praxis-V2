@@ -1,0 +1,1 @@
+7.5.17 Nachtrag: Einheitsnotizen werden bei bestehenden Einheiten beim Tippen lokal gespeichert, auch beim Schliessen des Dialogs. Aufzaehlungsbutton und automatische Fortsetzung von Aufzaehlungen mit Enter. OneDrive-Synchronisierung bleibt erforderlich.

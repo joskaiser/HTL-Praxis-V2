@@ -1,0 +1,1 @@
+7.5.17: Schülerfotos und Beschriftungen auf Doppeltischen und gedrehten Tischen bleiben aufrecht. Sitzplatzpositionen und Zuordnungen bleiben unverändert.

@@ -1,0 +1,1 @@
+7.5.17: Fotos pro Bewertungsrubrik im Schuelerprofil; kein Auto-Sync-Render waehrend Texteingaben; Bewertungsnotizen speichern bei Eingabe. Vor Installation lokales Backup exportieren.
