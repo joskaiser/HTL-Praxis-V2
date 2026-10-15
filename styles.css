@@ -144,3 +144,8 @@ code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em;o
 /* 7.5.19: Profilfotos ausschließlich direkt beim Schülernamen im Bericht. */
 .report-student-name{display:flex;align-items:center;gap:7px;min-width:0}.report-student-name .report-profile-thumb{flex:none;width:40px;height:40px}.report-page h3 .report-student-name{display:inline-flex;vertical-align:middle}
 @media print{.report-student-name{display:flex!important;align-items:center!important;gap:2mm}.report-student-name .report-profile-thumb{width:11mm!important;height:11mm!important;display:block!important}}
+
+/* Zeit- und Begründungseingabe in Bewertungstabellen */
+.attendance-time{display:flex;flex-direction:column;gap:5px;min-width:150px}
+.attendance-time .quick-time{min-width:125px;width:100%;font-variant-numeric:tabular-nums}
+.attendance-time .attendance-reason{width:100%;min-width:145px;box-sizing:border-box;font-size:12px}
