@@ -1,0 +1,6 @@
+i-i_Doku 7.5.27
+
+Vollstaendige Folgeversion des zuletzt bereitgestellten 7.5.26-Komplettpakets (Synchronisationskonflikte).
+Keine fachlichen Funktionsaenderungen gegenueber diesem Paket.
+Versionsnummern und PWA-Cache aktualisiert.
+Vor der Installation Datensicherung erstellen.

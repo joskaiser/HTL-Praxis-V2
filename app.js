@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION='7.5.26';
+const APP_VERSION='7.5.27';
 const DATA_SCHEMA_VERSION=4;
 const DB_NAME='htl-praxis-db';
 const DB_STORE='app';
@@ -596,13 +596,79 @@ async function syncNow({silent=false,downloadOnly=false,resolutions={}}={}){
  }catch(e){if(e.status===412||e.status===409)e=new Error('Ein anderes Geraet hat gleichzeitig gespeichert. Nichts ueberschrieben; bitte erneut abgleichen.');syncError(e,silent);return false}
  finally{syncBusy=false}
 }
+// Lesbare Konfliktanzeige; die eigentliche 3-Wege-Merge-Logik bleibt unveraendert.
+const SYNC_FIELD_LABELS={
+ showNotesInOverview:'Notiz in der Gruppenübersicht anzeigen',notes:'Notizen',topic:'Unterrichtsstoff',date:'Datum',
+ teacherName:'Lehrperson',teacherArrive:'Ankunft Lehrperson',teacherLeave:'Ende Lehrperson',
+ absent:'Ganztägig abwesend',arrive:'Kommt (Uhrzeit)',leave:'Geht (Uhrzeit)',
+ arriveReason:'Grund für spätes Kommen',leaveReason:'Grund für früheres Gehen',
+ absenceOverride:'Manuelle Fehlstunden',topicOverride:'Individueller Unterrichtsstoff',
+ comment:'Bemerkung',ratings:'Bewertungen',ratingNotes:'Bewertungsnotizen',ratingPhotos:'Bewertungsfotos',
+ workPhotos:'Werkstückfotos',bonus:'Zusatzpunkte',bonusPoints:'Zusatzpunkte',bonusFactor:'Faktor Zusatzpunkte',
+ name:'Name',code:'Klassenbezeichnung',groupId:'Gruppe',classId:'Klasse',photo:'Schülerfoto',
+ strengths:'Stärken',supportNeed:'Förderbedarf',supportGoal:'Förderziel',
+ signature:'Unterschrift',signedAt:'Unterschriftsdatum',signedBy:'Unterschrift von',
+ weight:'Gewichtung',points:'Punkte',maxPoints:'Maximalpunkte',checked:'Erledigt',
+ settings:'Einstellungen',classes:'Klassen',students:'Schüler',units:'Unterrichtseinheiten',
+ records:'Einheitsbewertungen',curriculum:'Lehrplan',materials:'Materialien',scripts:'Skripte',
+ generalChecklists:'Allgemeine Checklisten',checklists:'Checklisten',activeYear:'Aktuelles Schuljahr'
+};
+function syncFieldName(key){return SYNC_FIELD_LABELS[key]||key.replace(/([a-zäöü])([A-Z])/g,'$1 $2').replace(/_/g,' ')}
+function syncConflictDescription(path){
+ const parts=String(path).match(/[^.\[\]]+/g)||[];
+ const section=parts[0]||'',id=parts[1]||'';
+ const unit=state.units?.find(u=>u.id===id);
+ const pupil=state.students?.find(s=>s.id===id);
+ const klass=state.classes?.find(c=>c.id===id);
+ const groupFor=(cid,gid)=>state.classes?.find(c=>c.id===cid)?.groups?.find(g=>g.id===gid);
+ let location=[];
+ if(unit){const c=cls(unit.classId),g=groupFor(unit.classId,unit.groupId);location=[c?.code,g?.name,unit.date?fmtDate(unit.date):'',unit.topic].filter(Boolean);}
+ else if(pupil){const c=cls(pupil.classId),g=groupFor(pupil.classId,pupil.groupId);location=[c?.code,g?.name,pupil.name].filter(Boolean);}
+ else if(klass)location=[klass.code||klass.label].filter(Boolean);
+ else if(section==='records'){
+  const ids=id.split('::');const st=student(ids[0]),un=state.units?.find(u=>u.id===ids[1]);
+  if(st)location=[cls(st.classId)?.code,groupFor(st.classId,st.groupId)?.name,st.name].filter(Boolean);
+  if(un)location.push([un.date?fmtDate(un.date):'',un.topic].filter(Boolean).join(' · '));
+ }
+ if(!location.length)location=[syncFieldName(section)];
+ const last=parts.at(-1)||section;
+ const field=syncFieldName(last);
+ const extra=parts.slice(section==='records'?2:2,-1).filter(x=>x!==last).map(syncFieldName);
+ return {location:location.join(' → '),field:extra.length?extra.join(' → ')+' → '+field:field};
+}
+function syncConflictValue(v){
+ if(v===undefined)return 'Nicht vorhanden / gelöscht';
+ if(v===null)return 'Leer (null)';
+ if(typeof v==='boolean')return v?'Ja':'Nein';
+ if(typeof v==='string'){
+  if(!v)return 'Leer';
+  if(/^data:image\//.test(v))return 'Bild / Unterschrift vorhanden (Bilddaten ausgeblendet)';
+  return v.length>1200?v.slice(0,1200)+' … (gekürzt)':v;
+ }
+ if(typeof v==='number')return String(v).replace('.',',');
+ const value=JSON.stringify(v,null,2);
+ return value.length>1800?value.slice(0,1800)+' … (gekürzt)':value;
+}
 function showSyncConflicts(conflicts,previous={}){
- const rows=conflicts.slice(0,40).map((c,i)=>`<div class="field"><label><code>${escapeHtml(c.path)}</code></label><select data-resolve="${i}"><option value="">Bitte entscheiden</option><option value="local">Diese Geraeteversion behalten</option><option value="remote">OneDrive-Version uebernehmen</option></select></div>`).join('');
- openModal(`<h2>Synchronisationskonflikt</h2><p>${conflicts.length} Felder wurden parallel geaendert. Waehle fuer jedes Feld die gueltige Fassung. Es wird nichts geloescht, bevor du bestaetigst.</p>${rows}${conflicts.length>40?'<p>Mehr als 40 Konflikte: Bitte zuerst Daten sichern und manuell pruefen.</p>':''}<div class="modal-actions"><button class="btn secondary" id="confBackup">Backup exportieren</button><button class="btn secondary" id="confClose">Abbrechen</button><button class="btn" id="confResolve" ${conflicts.length>40?'disabled':''}>Auswahl uebernehmen und abgleichen</button></div>`);
+ const rows=conflicts.slice(0,40).map((c,i)=>{
+  const d=syncConflictDescription(c.path);
+  return `<section class="sync-conflict-item" style="border:1px solid #cbd5e1;border-radius:10px;padding:14px;margin:12px 0">
+   <div class="small" style="color:#52677a">Konflikt ${i+1} von ${conflicts.length} · ${escapeHtml(d.location)}</div>
+   <b>${escapeHtml(d.field)}</b>
+   <div class="sync-conflict-compare" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:12px 0">
+    <div style="border:1px solid #d8e0e8;border-radius:7px;padding:10px;min-width:0"><b>Dieser Computer (lokal)</b><pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:190px;overflow:auto;margin-bottom:0">${escapeHtml(syncConflictValue(c.local))}</pre></div>
+    <div style="border:1px solid #d8e0e8;border-radius:7px;padding:10px;min-width:0"><b>OneDrive (Cloud)</b><pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:190px;overflow:auto;margin-bottom:0">${escapeHtml(syncConflictValue(c.remote))}</pre></div>
+   </div>
+   <label for="confChoice${i}">Welche Fassung soll übernommen werden?</label>
+   <select id="confChoice${i}" data-resolve="${i}" style="width:100%"><option value="">Bitte entscheiden</option><option value="local" ${previous[c.path]==='local'?'selected':''}>Lokale Fassung – dieser Computer</option><option value="remote" ${previous[c.path]==='remote'?'selected':''}>OneDrive-Fassung – Cloud</option></select>
+   <details style="margin-top:9px"><summary>Technische Details anzeigen</summary><code style="overflow-wrap:anywhere">${escapeHtml(c.path)}</code></details>
+  </section>`;
+ }).join('');
+ openModal(`<h2>Synchronisationskonflikt</h2><p>${conflicts.length} Felder wurden parallel geändert. Vergleiche die Werte und entscheide für jedes Feld. Vor der Bestätigung wird nichts überschrieben.</p>${rows}${conflicts.length>40?'<p>Mehr als 40 Konflikte: Bitte zuerst Daten sichern und manuell prüfen.</p>':''}<div class="modal-actions"><button class="btn secondary" id="confBackup">Backup exportieren</button><button class="btn secondary" id="confClose">Abbrechen</button><button class="btn" id="confResolve" ${conflicts.length>40?'disabled':''}>Auswahl übernehmen und abgleichen</button></div>`);
  document.getElementById('confBackup').onclick=exportBackup;
  document.getElementById('confClose').onclick=closeModal;
  document.getElementById('confResolve').onclick=()=>{
-  const choices={...previous};for(let i=0;i<conflicts.length;i++){const value=document.querySelector(`[data-resolve="${i}"]`).value;if(!value){alert('Bitte fuer jeden Konflikt eine Fassung auswaehlen.');return}choices[conflicts[i].path]=value}
+  const choices={...previous};for(let i=0;i<conflicts.length;i++){const value=document.querySelector(`[data-resolve="${i}"]`).value;if(!value){alert('Bitte für jeden Konflikt eine Fassung auswählen.');return}choices[conflicts[i].path]=value}
   closeModal();syncNow({silent:false,resolutions:choices});
  };
 }

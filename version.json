@@ -1,6 +1,6 @@
 {
-  "version": "7.5.26",
+  "version": "7.5.27",
   "dataSchema": 4,
   "released": "2026-10-17",
-  "notes": "7.5.26: Zusatzpunkte-Faktor, Einheitenchecklisten, Punkte je Kontrollpunkt, normierte Checklistenbewertung und Gewichtung."
+  "notes": "7.5.27: Vollstaendige Folgeversion von 7.5.26 mit verbesserter Anzeige von Synchronisationskonflikten, Checklistenbewertung und Zusatzpunktefaktor."
 }

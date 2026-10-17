@@ -1,0 +1,6 @@
+Version 7.5.26 - Synchronisationskonflikte
+- Lesbare Feldbezeichnungen und Kontext aus Klasse/Gruppe/Einheit/Schueler, soweit im lokalen Datenbestand vorhanden.
+- Lokale und OneDrive-Werte nebeneinander.
+- Explizite Auswahl je Konflikt; Backup und technische Feldpfade bleiben.
+- Drei-Wege-Merge, ETag-Pruefung und Datenspeicherung unveraendert.
+- Cache-Kennung erneuert.
