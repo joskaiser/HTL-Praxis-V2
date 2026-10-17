@@ -17,3 +17,29 @@ function generalEdit(sid,id){const s=student(sid),templates=generalTemplates(s.c
 // Keep original student view unchanged; add the new module as a separate action.
 const generalOriginalRenderStudent=renderStudent;
 renderStudent=function(sid,unitId){generalOriginalRenderStudent(sid,unitId);const toolbar=view.querySelector('.view-header .toolbar');if(toolbar){const b=document.createElement('button');b.className='btn secondary';b.textContent='Allgemein / Checklisten';b.onclick=()=>generalOpen(sid);toolbar.prepend(b)}};
+
+// Move and resize checklist dialogs without changing unrelated dialogs.
+const generalOriginalOpenModal=openModal;
+openModal=function(html){
+ generalOriginalOpenModal(html);
+ const isChecklist=/(general-matrix|general-form|general-templates|general-edit-row|generalCanvas|Allgemein|Checkliste|Unterschrift)/.test(html);
+ modal.classList.toggle('general-movable-dialog',isChecklist);
+ if(!isChecklist)return;
+ modal.style.left='';modal.style.top='';modal.style.margin='';
+ const body=modal.querySelector('.modal-body');if(!body)return;
+ const grip=document.createElement('div');grip.className='general-drag-handle';grip.textContent='⋮⋮  Fenster verschieben';grip.title='Zum Verschieben ziehen';body.prepend(grip);
+ let start=null;
+ grip.addEventListener('pointerdown',ev=>{
+  if(ev.button!==0)return;
+  const r=modal.getBoundingClientRect();modal.style.left=r.left+'px';modal.style.top=r.top+'px';modal.style.margin='0';
+  start={x:ev.clientX,y:ev.clientY,left:r.left,top:r.top};grip.setPointerCapture(ev.pointerId);ev.preventDefault();
+ });
+ grip.addEventListener('pointermove',ev=>{
+  if(!start)return;
+  const x=Math.max(0,Math.min(window.innerWidth-60,start.left+ev.clientX-start.x));
+  const y=Math.max(0,Math.min(window.innerHeight-40,start.top+ev.clientY-start.y));
+  modal.style.left=x+'px';modal.style.top=y+'px';
+ });
+ grip.addEventListener('pointerup',()=>start=null);
+ grip.addEventListener('pointercancel',()=>start=null);
+};

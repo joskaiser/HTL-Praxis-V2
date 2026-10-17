@@ -1,6 +1,6 @@
 {
-  "version": "7.5.23",
+  "version": "7.5.24",
   "dataSchema": 4,
   "released": "2026-10-17",
-  "notes": "Gruppenchecklisten, Unterschriften entfernen und Rueckkehr zur Checklisten-Uebersicht."
+  "notes": "Updatehinweis korrigiert, Checklistenfenster verschiebbar und skalierbar, Unterschriften in Matrix entfernbar, letzte Checkliste gespeichert."
 }

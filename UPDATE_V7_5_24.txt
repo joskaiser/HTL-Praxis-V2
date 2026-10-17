@@ -1,0 +1,6 @@
+Version 7.5.24
+- app.js, version.json und SW-Cache konsistent auf 7.5.24.
+- Checklisten-Dialoge mit Ziehleiste verschiebbar und am Fensterrand skalierbar.
+- Unterschriften in Klassen-/Gruppenmatrix mit Sicherheitsabfrage entfernen.
+- Letzte Checkliste wird je Klasse/Gruppe lokal wieder geöffnet.
+Hinweis: Bedienung und OneDrive-Synchronisierung sind nicht end-to-end getestet.

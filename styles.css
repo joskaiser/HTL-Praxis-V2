@@ -156,3 +156,9 @@ code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em;o
 .general-matrix{width:min(95vw,1200px);max-width:100%}.general-matrix-tools{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:12px 0}.general-matrix-tools select{max-width:320px}.general-matrix-scroll{overflow:auto;max-height:65vh;border:1px solid #d4dce6;border-radius:8px}.general-matrix-table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:13px}.general-matrix-table th,.general-matrix-table td{border-bottom:1px solid #dbe2ec;border-right:1px solid #e5eaf1;padding:7px;vertical-align:middle;background:#fff}.general-matrix-table thead th{position:sticky;top:0;z-index:3;background:#edf3fa;min-width:130px}.general-matrix-table tbody th{position:sticky;left:0;z-index:2;background:#fff;min-width:175px;max-width:220px;text-align:left}.general-matrix-table thead th:first-child{left:0;z-index:4}.general-matrix-table input[type=date]{min-width:140px}.general-matrix-table textarea{width:180px;min-height:44px;resize:vertical}.general-matrix-center{text-align:center}.general-matrix-name{border:0;background:transparent;color:#145aa0;text-align:left;cursor:pointer;font:inherit;font-weight:600}
 dialog:has(.general-matrix){width:min(1240px,96vw)}
 .general-matrix-table thead th{color:#1c2830}
+
+/* Resizable, draggable checklist windows */
+dialog.general-movable-dialog{resize:both;overflow:auto;min-width:min(360px,95vw);min-height:260px;max-width:98vw;max-height:96vh}
+dialog.general-movable-dialog .modal-body{min-width:0}
+.general-drag-handle{cursor:move;touch-action:none;user-select:none;background:#edf3f7;color:#34495a;border-radius:6px;padding:7px 12px;margin:-8px 44px 12px -6px;font-size:12px;font-weight:650}
+dialog.general-movable-dialog .general-matrix-scroll{max-height:calc(90vh - 260px)}
