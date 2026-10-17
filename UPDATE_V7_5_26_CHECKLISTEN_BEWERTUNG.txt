@@ -1,0 +1,8 @@
+Version 7.5.26 – Ergänzung zur letzten Version 7.5.26
+- Checklisten in Einheiten zuweisen und dort anzeigen
+- Punkte pro Checkbox individuell einstellbar
+- Erfüllte Punkte / maximal mögliche Punkte × 10
+- Checklistenbewertung als zusätzliche Spalte in der Einheitsübersicht
+- Prozentgewichtung je zugewiesener Checkliste
+- Ohne Eintrag keine Bewertung
+- Bisherige Daten und Zusatzpunktefaktor bleiben erhalten

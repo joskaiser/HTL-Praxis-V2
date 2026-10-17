@@ -2,5 +2,5 @@
   "version": "7.5.26",
   "dataSchema": 4,
   "released": "2026-10-17",
-  "notes": "7.5.26: Zusatzpunkte-Faktor (Standard 1), Checklisten pro Unterrichtseinheit, Checklisten löschen."
+  "notes": "7.5.26: Zusatzpunkte-Faktor, Einheitenchecklisten, Punkte je Kontrollpunkt, normierte Checklistenbewertung und Gewichtung."
 }
