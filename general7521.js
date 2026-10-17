@@ -25,7 +25,25 @@ openModal=function(html){
  const isChecklist=/(general-matrix|general-form|general-templates|general-edit-row|generalCanvas|Allgemein|Checkliste|Unterschrift)/.test(html);
  modal.classList.toggle('general-movable-dialog',isChecklist);
  if(!isChecklist)return;
+ // Reset stale coordinates when switching between dialogs.
  modal.style.left='';modal.style.top='';modal.style.margin='';
+ const matrix=modal.querySelector('.general-matrix');
+ if(matrix){
+  // One close control only: the accessible X in the top-right corner.
+  modal.querySelector('.modal-footer-close')?.remove();
+  matrix.querySelector('#generalMatrixClose')?.closest('.modal-actions')?.remove();
+  const previous=generalWindowGeometry();
+  if(previous){
+   modal.style.width=Math.min(previous.width,innerWidth-24)+'px';
+   modal.style.height=Math.min(previous.height,innerHeight-24)+'px';
+   modal.style.left=Math.max(0,Math.min(previous.left,innerWidth-previous.width))+'px';
+   modal.style.top=Math.max(0,Math.min(previous.top,innerHeight-previous.height))+'px';
+   modal.style.margin='0';
+  }
+  const observer=new ResizeObserver(()=>generalStoreWindowGeometry());
+  observer.observe(modal);
+  modal.addEventListener('close',()=>observer.disconnect(),{once:true});
+ }
  const body=modal.querySelector('.modal-body');if(!body)return;
  const grip=document.createElement('div');grip.className='general-drag-handle';grip.textContent='⋮⋮  Fenster verschieben';grip.title='Zum Verschieben ziehen';body.prepend(grip);
  let start=null;
@@ -40,6 +58,15 @@ openModal=function(html){
   const y=Math.max(0,Math.min(window.innerHeight-40,start.top+ev.clientY-start.y));
   modal.style.left=x+'px';modal.style.top=y+'px';
  });
- grip.addEventListener('pointerup',()=>start=null);
+ grip.addEventListener('pointerup',()=>{start=null;generalStoreWindowGeometry()});
  grip.addEventListener('pointercancel',()=>start=null);
 };
+
+// Only geometry is stored locally; no pupil or signature data is persisted here.
+function generalWindowGeometry(){try{return JSON.parse(localStorage.getItem('general-matrix-window-7525')||'null')}catch(e){return null}}
+function generalStoreWindowGeometry(){
+ if(!modal.open||!modal.querySelector('.general-matrix'))return;
+ const r=modal.getBoundingClientRect();
+ if(r.width<300||r.height<200)return;
+ try{localStorage.setItem('general-matrix-window-7525',JSON.stringify({width:Math.round(r.width),height:Math.round(r.height),left:Math.round(r.left),top:Math.round(r.top)}))}catch(e){}
+}

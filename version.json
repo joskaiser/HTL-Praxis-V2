@@ -1,6 +1,6 @@
 {
-  "version": "7.5.24",
+  "version": "7.5.25",
   "dataSchema": 4,
   "released": "2026-10-17",
-  "notes": "Updatehinweis korrigiert, Checklistenfenster verschiebbar und skalierbar, Unterschriften in Matrix entfernbar, letzte Checkliste gespeichert."
+  "notes": "Checklistenfenster responsiv, ein Schliessen-Button, sichere Groessenaenderung und gespeicherte Fenstergroesse."
 }

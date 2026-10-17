@@ -162,3 +162,27 @@ dialog.general-movable-dialog{resize:both;overflow:auto;min-width:min(360px,95vw
 dialog.general-movable-dialog .modal-body{min-width:0}
 .general-drag-handle{cursor:move;touch-action:none;user-select:none;background:#edf3f7;color:#34495a;border-radius:6px;padding:7px 12px;margin:-8px 44px 12px -6px;font-size:12px;font-weight:650}
 dialog.general-movable-dialog .general-matrix-scroll{max-height:calc(90vh - 260px)}
+
+/* 7.5.25: checklist matrix fills the resizable dialog; scrolling stays inside the table. */
+dialog.general-movable-dialog:has(.general-matrix){
+ width:min(1240px,96vw);height:min(820px,90vh);
+ max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);
+ overflow:hidden;resize:both;
+}
+dialog.general-movable-dialog:has(.general-matrix) .modal-body{
+ display:flex;flex-direction:column;width:100%;height:100%;min-height:0;min-width:0;
+ padding:16px 18px;overflow:hidden;
+}
+dialog.general-movable-dialog .general-matrix{
+ display:flex;flex-direction:column;flex:1 1 auto;width:100%;max-width:none;
+ min-width:0;min-height:0;overflow:hidden;
+}
+dialog.general-movable-dialog .general-matrix-scroll{
+ flex:1 1 auto;min-width:0;min-height:0;width:100%;max-height:none;
+ overflow:auto;overscroll-behavior:contain;
+}
+dialog.general-movable-dialog .general-matrix-table{width:max-content;min-width:100%}
+dialog.general-movable-dialog .general-matrix h2{flex:none;margin:0 0 12px}
+dialog.general-movable-dialog .general-matrix-tools,
+dialog.general-movable-dialog .general-matrix > p{flex:none}
+dialog.general-movable-dialog .modal-close{z-index:8}

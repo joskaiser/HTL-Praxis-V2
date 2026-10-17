@@ -1,0 +1,1 @@
+7.5.25: Checklisten-Tabelle passt sich der Fenstergroesse an. Nur das X schliesst die Matrix. Groesse und Position werden lokal gespeichert. Bestehende Schuelerdaten unveraendert.
