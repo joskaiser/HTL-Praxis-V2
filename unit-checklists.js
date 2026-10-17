@@ -1,0 +1,17 @@
+// Checklists associated with individual teaching units (existing class templates and evidence are reused).
+'use strict';
+function unitChecklistDialog(cid,gid,unitId){
+ const u=state.units.find(x=>x.id===unitId&&x.classId===cid&&x.groupId===gid);
+ if(!u)return;
+ const templates=generalTemplates(cid);
+ u.checklistIds=Array.isArray(u.checklistIds)?u.checklistIds:[];
+ const selected=u.checklistIds.filter(id=>templates.some(t=>t.id===id));
+ openModal(`<h2>Checklisten · ${escapeHtml(u.topic||'Einheit')} · ${fmtDate(u.date)}</h2><p class="small">Hier legst du fest, welche Checklisten in dieser Unterrichtseinheit verwendet werden. Die Einträge bleiben mit der Schülerakte verknüpft.</p><div class="field"><label>Vorhandene Checkliste hinzufügen</label><select id="ucPick"><option value="">Bitte auswählen</option>${templates.filter(t=>!selected.includes(t.id)).map(t=>`<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('')}</select><button class="btn" id="ucAdd">Hinzufügen</button></div><div class="section-card">${selected.length?selected.map(id=>{const t=templates.find(x=>x.id===id);return `<div class="general-template-row"><b>${escapeHtml(t.name)}</b><div><button class="btn secondary" data-uc-open="${escapeHtml(id)}">Tabelle öffnen</button> <button class="btn secondary" data-uc-unlink="${escapeHtml(id)}">Aus Einheit entfernen</button> <button class="btn danger" data-uc-delete="${escapeHtml(id)}">Checkliste löschen</button></div></div>`}).join(''):'Noch keine Checkliste zugewiesen.'}</div><div class="modal-actions"><button class="btn secondary" id="ucNew">+ Neue Checkliste</button></div>`);
+ document.getElementById('ucAdd').onclick=()=>{const id=document.getElementById('ucPick').value;if(!id)return;u.checklistIds.push(id);saveState();unitChecklistDialog(cid,gid,unitId)};
+ document.querySelectorAll('[data-uc-open]').forEach(b=>b.onclick=()=>generalClassMatrix(cid,b.dataset.ucOpen,gid));
+ document.querySelectorAll('[data-uc-unlink]').forEach(b=>b.onclick=()=>{u.checklistIds=u.checklistIds.filter(id=>id!==b.dataset.ucUnlink);saveState();unitChecklistDialog(cid,gid,unitId)});
+ document.querySelectorAll('[data-uc-delete]').forEach(b=>b.onclick=()=>{const id=b.dataset.ucDelete,t=templates.find(x=>x.id===id);if(!t||!confirm('Checkliste „'+t.name+'“ für die gesamte Klasse löschen? Bereits erfasste Nachweise bleiben gespeichert.'))return;templates.splice(templates.indexOf(t),1);state.units.forEach(unit=>{if(Array.isArray(unit.checklistIds))unit.checklistIds=unit.checklistIds.filter(x=>x!==id)});saveState();unitChecklistDialog(cid,gid,unitId)});
+ document.getElementById('ucNew').onclick=()=>{const name=prompt('Name der neuen Checkliste:');if(!name?.trim())return;const t={id:uid('checklist'),name:name.trim(),items:[]};templates.push(t);u.checklistIds.push(t.id);saveState();const first=groupStudents(cid,gid)[0]||classStudents(cid)[0];if(first)generalEdit(first.id,t.id);else unitChecklistDialog(cid,gid,unitId)};
+}
+const originalUnitChecklistRenderGroup=renderGroup;
+renderGroup=function(cid,gid,unitId){originalUnitChecklistRenderGroup(cid,gid,unitId);const u=state.units.find(x=>x.id===unitId&&x.groupId===gid&&x.classId===cid);if(!u)return;const toolbar=view.querySelector('.view-header .toolbar');if(!toolbar)return;const b=document.createElement('button');b.className='btn secondary';b.textContent='Checklisten dieser Einheit';b.onclick=()=>unitChecklistDialog(cid,gid,u.id);toolbar.append(b)};

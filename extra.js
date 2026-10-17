@@ -46,7 +46,7 @@ function scoreDetail(r,weights){
   raw+=v;count++;
   if(w>0){sum+=v*w;den+=w;}
  }
- const bonus=typeof bonusTotal==='function'?bonusTotal(r):0;
+ const bonus=typeof bonusTotal==='function'?bonusTotal(r)*(typeof bonusFactor==='function'?bonusFactor():1):0;
  const avg=den>0?Math.min(10,sum/den+bonus):null;
  return count?{points:raw,bonus,weightedPoints:avg===null?0:avg*den,weightSum:den,average:avg,count}:null;
 }

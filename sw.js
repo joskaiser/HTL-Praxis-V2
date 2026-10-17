@@ -1,5 +1,5 @@
-const CACHE='htl-praxis-v7.5.25-checklist-layout';
-const ASSETS=['./','./index.html','./styles.css','./app.js','./extra.js','./room.js','./general7521.js','./general-class.js','./media755.js','./pages756.js','./lesson757.js','./config.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
+const CACHE='htl-praxis-v7.5.26-bonusfactor-unitchecklists-r2';
+const ASSETS=['./','./index.html','./styles.css','./app.js','./extra.js','./room.js','./general7521.js','./general-class.js','./unit-checklists.js','./media755.js','./pages756.js','./lesson757.js','./config.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));
