@@ -1,6 +1,6 @@
 {
-  "version": "7.5.22",
+  "version": "7.5.23",
   "dataSchema": 4,
   "released": "2026-10-17",
-  "notes": "Klassenchecklisten und Lehrpersonenzuordnung je Unterrichtseinheit, Standardlehrer vorbelegt."
+  "notes": "Gruppenchecklisten, Unterschriften entfernen und Rueckkehr zur Checklisten-Uebersicht."
 }

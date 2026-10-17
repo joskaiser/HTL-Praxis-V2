@@ -1,4 +1,4 @@
-const CACHE='htl-praxis-v7.5.22-teacher-assignment';
+const CACHE='htl-praxis-v7.5.23-group-checklists';
 const ASSETS=['./','./index.html','./styles.css','./app.js','./extra.js','./room.js','./general7521.js','./general-class.js','./media755.js','./pages756.js','./lesson757.js','./config.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
