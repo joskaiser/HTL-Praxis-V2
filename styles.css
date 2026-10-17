@@ -149,3 +149,6 @@ code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em;o
 .attendance-time{display:flex;flex-direction:column;gap:5px;min-width:150px}
 .attendance-time .quick-time{min-width:125px;width:100%;font-variant-numeric:tabular-nums}
 .attendance-time .attendance-reason{width:100%;min-width:145px;box-sizing:border-box;font-size:12px}
+
+/* 7.5.21 Allgemein */
+.general-template-row{display:flex;align-items:center;gap:8px;justify-content:space-between;border-bottom:1px solid #ddd;padding:12px 0;flex-wrap:wrap}.general-form{display:grid;gap:14px;margin:12px 0}.general-field{display:flex;align-items:center;gap:10px}.general-field input{width:20px;height:20px}.general-edit-row{display:grid;grid-template-columns:minmax(100px,1fr) 130px 42px;gap:6px;margin:8px 0}.general-signed{max-width:260px;max-height:110px;background:white;border:1px solid #ddd}

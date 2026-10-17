@@ -1,0 +1,3 @@
+i-i_Doku 7.5.21
+Allgemein / Checklisten in der Schueleransicht. Zwei Standardvorlagen je Klasse, eigene Vorlagen mit Checkbox, Text, Datum und Bildschirm-Unterschrift. Eintraege und Unterschriften werden im bestehenden Schuelerdatensatz gespeichert und mit OneDrive synchronisiert.
+WICHTIG: Vor Installation Datenbackup erstellen. Unterschriften sind einfache elektronische Signaturen, keine qualifizierten elektronischen Signaturen.

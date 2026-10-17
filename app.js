@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION='7.5.20';
+const APP_VERSION='7.5.21';
 const DATA_SCHEMA_VERSION=4;
 const DB_NAME='htl-praxis-db';
 const DB_STORE='app';
