@@ -1,6 +1,6 @@
 {
-  "version": "7.5.21",
+  "version": "7.5.22",
   "dataSchema": 4,
   "released": "2026-10-17",
-  "notes": "Allgemein je Schueler: Arbeitsbekleidung, Einfuehrung, eigene Checklisten, Unterschrift. Bestehende Datenstruktur ergaenzt."
+  "notes": "Klassenchecklisten und Lehrpersonenzuordnung je Unterrichtseinheit, Standardlehrer vorbelegt."
 }
