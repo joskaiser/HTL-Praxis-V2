@@ -1,0 +1,9 @@
+i-i_Doku 7.5.28 – Vollpaket
+
+Neu: Wochen-/Blockplanung und Schulkalender über Seitenleiste. Mehrwöchige Zeiträume, Unterrichtseinheiten je Gruppe (vorhandene Einheiten öffnen und bearbeiten), schulweite Termine mit Ausnahmen je Klasse/Gruppe, Klassen-/Gruppentermine, Lernzielkontrollen/Tests mit separater Ergebnisliste und CSV-Export, Druckansicht/PDF über Browser.
+
+Kommt/Geht: Analoge Uhr mit Stunde, 00/15/30/45 Minuten, +/-15 Minuten, Touch/Maus, Übernehmen/Abbrechen/Leeren.
+
+WICHTIGE GRENZEN: Ereignisnoten sind bewusst separat und noch nicht in die vorhandene Gesamtnotenformel eingebunden. Unterlagen/Skizzen werden weiterhin über bestehende Unterrichtseinheiten verwaltet; Ereignisse besitzen zunächst ein Textfeld für Unterlagenhinweise. Browser-PDF erfolgt über Drucken. Bestehende OneDrive-Synchronisierung ist nicht live gegen ein Microsoft-Konto getestet.
+
+Vor dem produktiven Einsatz mit Echtdaten bitte ein Backup erstellen und zunächst mit Testdaten prüfen.

@@ -1,6 +1,6 @@
 {
-  "version": "7.5.27",
+  "version": "7.5.28",
   "dataSchema": 4,
-  "released": "2026-10-17",
-  "notes": "7.5.27: Vollstaendige Folgeversion von 7.5.26 mit verbesserter Anzeige von Synchronisationskonflikten, Checklistenbewertung und Zusatzpunktefaktor."
+  "released": "2026-10-19",
+  "notes": "Wochen-/Blockplanung, schulweite und klassenbezogene Ereignisse, Testbewertungen mit separater Auswertung, CSV/Druck und analoge Viertelstunden-Zeiteingabe."
 }
