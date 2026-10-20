@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION='7.5.28';
+const APP_VERSION='7.5.30';
 const DATA_SCHEMA_VERSION=4;
 const DB_NAME='htl-praxis-db';
 const DB_STORE='app';
@@ -416,10 +416,7 @@ async function getGraphToken(interactive=true){
  const app=await readyMsal();let acc=selectedMicrosoftAccount(app);
  if(!acc){
   if(!interactive)throw new Error('Microsoft-Anmeldung erforderlich: Bitte das Konto im OneDrive-Fenster auswaehlen.');
-  if(isStandaloneIOS()){await app.loginRedirect({scopes:GRAPH_SCOPES,prompt:'select_account'});return null}
-  const result=await app.loginPopup({scopes:GRAPH_SCOPES,prompt:'select_account'});
-  acc=result.account;app.setActiveAccount?.(acc);
-  if(result.accessToken)return result.accessToken;
+  await app.loginRedirect({scopes:GRAPH_SCOPES,prompt:'select_account'});return null;
  }
  try{
   const result=await app.acquireTokenSilent({account:acc,scopes:GRAPH_SCOPES});
@@ -427,11 +424,7 @@ async function getGraphToken(interactive=true){
   return result.accessToken;
  }catch(e){
   if(!interactive)throw e;
-  if(isStandaloneIOS()){await app.acquireTokenRedirect({scopes:GRAPH_SCOPES,account:acc});return null}
-  const result=await app.acquireTokenPopup({scopes:GRAPH_SCOPES,account:acc});
-  if(!result?.accessToken)throw new Error('Microsoft hat kein Zugriffstoken geliefert.');
-  app.setActiveAccount?.(result.account||acc);
-  return result.accessToken;
+  await app.acquireTokenRedirect({scopes:GRAPH_SCOPES,account:acc});return null;
  }
 }
 // The public GitHub Pages shell is not a security boundary. Keep all application UI
@@ -481,29 +474,10 @@ async function reauthenticateMicrosoft(useRedirect=false){
  if(!window.msal){alert('Microsoft-Anmeldemodul konnte nicht geladen werden.');return}
  try{
   const app=await readyMsal();
-  const request={scopes:GRAPH_SCOPES,prompt:'select_account'};
-  if(useRedirect||isStandaloneIOS()){
-   // Redirect is a deliberate user action; no application data is modified.
-   await app.loginRedirect(request);
-   return;
-  }
-  const result=await app.loginPopup(request);
-  if(!result?.account)throw new Error('Keine Microsoft-Anmeldung abgeschlossen.');
-  app.setActiveAccount?.(result.account);
-  // Verify token before clearing the previous authentication error.
-  const verified=await app.acquireTokenSilent({account:result.account,scopes:GRAPH_SCOPES});
-  if(!verified?.accessToken)throw new Error('Kein gueltiges Zugriffstoken erhalten.');
-  state.sync=state.sync||{};
-  if(isMicrosoftAuthError(state.sync.lastError)){
-   state.sync.lastError='';await idbSet('state',state);
-  }
-  syncDialog();
-  alert('Microsoft-Anmeldung erfolgreich. Bitte jetzt „Jetzt abgleichen“ wählen.');
- }catch(e){
-  const message=e?.message||String(e);
-  alert('Microsoft-Anmeldung nicht abgeschlossen: '+message+'\n\nFalls das Popup blockiert wird, „Anmeldung über Weiterleitung“ verwenden.');
- }
+  await app.loginRedirect({scopes:GRAPH_SCOPES,prompt:'select_account'});
+ }catch(e){alert('Microsoft-Anmeldung konnte nicht gestartet werden: '+(e?.message||String(e)))}
 }
+
 function isMicrosoftAuthError(message){return /post_request_failed|failed to fetch|login\.microsoftonline\.com|interaction_required|login_required|consent_required|token/i.test(String(message||''))}
 async function graph(token,url,opts={}){const r=await fetch('https://graph.microsoft.com/v1.0'+url,{...opts,headers:{Authorization:`Bearer ${token}`,...(opts.headers||{})}});if(!r.ok){const body=await r.text();const err=new Error(`${r.status} ${body}`);err.status=r.status;throw err}const ct=r.headers.get('content-type')||'';if(r.status===204)return null;if(ct.includes('json'))return r.json();return r.text()}
 async function appRoot(token){return graph(token,'/me/drive/special/approot')}

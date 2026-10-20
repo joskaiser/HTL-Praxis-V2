@@ -1,0 +1,1 @@
+Teststand 7.5.30: MSAL-Popup-Anmeldung an den zentralen Stellen durch Redirect ersetzt. Keine Migration oder Loeschung lokaler Daten. Browser/OneDrive nicht live getestet. GitHub Pages muss mit diesen Dateien aktualisiert werden. Vorher Datensicherung.
