@@ -1,0 +1,10 @@
+i-i_Doku 7.5.29 - Teststand
+
+- Schueler-Detailseite: Bewertungskategorien mit getrennten Rahmen und abwechselnden Akzentfarben.
+- Bewertungskategorie: Bilder oder PDFs aus Datei / Drag-and-drop; Bilder auch aus Zwischenablage.
+- Werkstueckbereich: Bilder oder PDFs; PDFs als Dateilinks mit Loeschfunktion.
+- Bisherige Bilddaten bleiben unveraendert. Neue PDF-Dokumente werden als Data-URL in den Datensatz aufgenommen.
+- PDF-Groessenlimit: 6 MB pro Datei. Grosse PDFs vergroessern die Synchronisationsdaten erheblich.
+- Noch nicht geprueft: echter Browserlauf, PDF-Druckdarstellung, OneDrive-Synchronisation.
+- Bekannte offene Punkte von 7.5.28 bleiben bestehen.
+- Vor der Verwendung bitte Daten sichern und mit Testdaten pruefen.

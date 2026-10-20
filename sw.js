@@ -1,5 +1,5 @@
-const CACHE='htl-praxis-v7.5.28-planning-calendar-clock-r1';
-const ASSETS=['./','./index.html','./styles.css','./app.js','./extra.js','./room.js','./general7521.js','./general-class.js','./unit-checklists.js','./media755.js','./pages756.js','./lesson757.js','./planning7528.js','./timepicker7528.js','./config.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
+const CACHE='htl-praxis-v7.5.29-pdf-rating-sections-r1';
+const ASSETS=['./','./index.html','./styles.css','./app.js','./extra.js','./room.js','./general7521.js','./general-class.js','./unit-checklists.js','./media755.js','./pages756.js','./lesson757.js','./planning7528.js','./timepicker7528.js','./clipboard7528.js','./config.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));

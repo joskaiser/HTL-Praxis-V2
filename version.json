@@ -1,6 +1,6 @@
 {
-  "version": "7.5.28",
+  "version": "7.5.29",
   "dataSchema": 4,
-  "released": "2026-10-19",
-  "notes": "Wochen-/Blockplanung, schulweite und klassenbezogene Ereignisse, Testbewertungen mit separater Auswertung, CSV/Druck und analoge Viertelstunden-Zeiteingabe."
+  "released": "2026-10-20",
+  "notes": "7.5.28 plus PDF-Anhänge für Bewertungs- und Werkstückfelder und visuell getrennte Bewertungskategorien."
 }
