@@ -1,0 +1,10 @@
+i-i_Doku 7.5.33 – Synchronisationsstatus und Verifikation (Teststand)
+
+- Keine ETag-basierte Erfolgsmeldung ohne tatsächliches Lesen der Cloud-Datei.
+- Einheitlicher Laufzeitstatus für Kopfzeile, Dialog und Fortschrittsanzeige.
+- Alte Netzwerkfehler werden nicht als abgelaufene Anmeldung fehlklassifiziert.
+- Cloud-Metadaten werden vor dem Zusammenführen erneut geprüft.
+- Erster Upload wird ebenfalls durch erneutes Lesen verifiziert.
+- Fehler im Dialog aktualisieren sich ohne erneutes Öffnen.
+
+WICHTIG: Vor Einsatz vollständiges Backup außerhalb der App sichern. Browser- und echte Zwei-Geräte-OneDrive-Tests stehen aus. Nicht mit produktiven Daten testen, solange diese Tests nicht erfolgreich waren.
