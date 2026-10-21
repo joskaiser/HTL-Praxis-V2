@@ -1,6 +1,6 @@
 {
-  "version": "7.5.36",
+  "version": "7.5.37",
   "dataSchema": 4,
   "released": "2026-10-21",
-  "notes": "Zufallsgenerator, Zeitvorgaben Kommt/Geht, Auto-Prüfung 5 Min., Abgleich nach Änderungen 30 Sek."
+  "notes": "Einheitsbezogene Schüler-/Themen-/Materialauslosung mit Dokumentation"
 }
