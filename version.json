@@ -1,6 +1,6 @@
 {
-  "version": "7.5.34",
+  "version": "7.5.36",
   "dataSchema": 4,
-  "released": "2026-10-20",
-  "notes": "7.5.34: Versionsvergleich korrigiert; OneDrive-Fehler je Schritt präzisiert; Zusatzpunkte-Faktor je Einheit."
+  "released": "2026-10-21",
+  "notes": "Zufallsgenerator, Zeitvorgaben Kommt/Geht, Auto-Prüfung 5 Min., Abgleich nach Änderungen 30 Sek."
 }
