@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION='7.5.30';
+const APP_VERSION='7.5.31';
 const DATA_SCHEMA_VERSION=4;
 const DB_NAME='htl-praxis-db';
 const DB_STORE='app';
@@ -497,6 +497,9 @@ function dataEqual(a,b){return JSON.stringify(a)===JSON.stringify(b)}
 function dataFingerprint(st){return JSON.stringify(syncData(st))}
 function itemArray(a){return Array.isArray(a)&&a.every(x=>isPlain(x)&&typeof x.id==='string')}
 function mergeThree(base,local,remote,path,conflicts,resolutions={}){
+ // Sicherheit: Fehlende Daten sind KEINE Loeschanweisung.
+ if(local===undefined)return cloneData(remote);
+ if(remote===undefined)return cloneData(local);
  if(dataEqual(local,remote))return cloneData(local);
  if(dataEqual(local,base))return cloneData(remote);
  if(dataEqual(remote,base))return cloneData(local);
@@ -517,6 +520,20 @@ function mergeThree(base,local,remote,path,conflicts,resolutions={}){
 }
 function applySyncData(merged){const device={clientId:state.settings?.clientId,tenantId:state.settings?.tenantId,autoSync:state.settings?.autoSync};const oldSync=state.sync||{};state=migrate({...state,...merged,settings:{...(merged.settings||{}),...device},sync:oldSync});}
 async function getSyncBase(){return await idbGet(SYNC_BASE_KEY)}
+// Lokale Sicherheitskopien vor jedem Datenwechsel. Keine Schuelerdaten in localStorage.
+async function saveSyncSafetySnapshot(reason){
+ const key='sync-safety-'+new Date().toISOString()+'-'+Math.random().toString(36).slice(2,8);
+ await idbSet(key,{reason,createdAt:new Date().toISOString(),state:cloneData(state)});
+ return key;
+}
+function syncProgress(percent,message,done=false){
+ let el=document.getElementById('syncProgress7531');
+ if(!el){el=document.createElement('div');el.id='syncProgress7531';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.style.cssText='position:fixed;bottom:16px;right:16px;z-index:99999;background:#173047;color:white;padding:14px 18px;border-radius:12px;box-shadow:0 4px 22px #0005;width:min(360px,calc(100vw - 32px));font:14px system-ui';document.body.appendChild(el)}
+ el.innerHTML='<div style="margin-bottom:8px"></div><div style="height:10px;background:#ffffff44;border-radius:8px;overflow:hidden"><div style="height:100%;background:#7bd5ae;width:'+Math.max(0,Math.min(100,percent))+'%;transition:width .2s"></div></div><div style="font-size:12px;margin-top:5px">'+percent+'% · '+(done?'Abgeschlossen':'Bearbeitung')+'</div>';
+ el.firstChild.textContent=message;
+ if(done){el.style.cursor='pointer';el.title='Zum Schliessen anklicken';el.onclick=()=>el.remove()}
+}
+
 async function commitSync(remote,meta){const localPrefs={clientId:state.settings?.clientId,tenantId:state.settings?.tenantId,autoSync:state.settings?.autoSync};
  const base=syncData(remote);await idbSet(SYNC_BASE_KEY,base);
  state.sync={...(state.sync||{}),remoteETag:meta?.eTag||'',remoteModifiedAt:meta?.lastModifiedDateTime||'',lastSyncedAt:new Date().toISOString(),lastError:'',dirtySince:''};
@@ -525,14 +542,18 @@ function syncError(e,silent){state.sync=state.sync||{};state.sync.lastError=e.me
 async function syncNow({silent=false,downloadOnly=false,resolutions={}}={}){
  if(syncBusy)return false;
  syncBusy=true;
+ syncProgress(5,'Sicheren Datenabgleich vorbereiten');
  const before=dataFingerprint(state);
  try{
+  syncProgress(12,'Microsoft-Anmeldung pruefen');
   const token=await getGraphToken(!silent);
   if(!token)return false; // Redirect-Anmeldung laeuft; kein Zugriff auf Daten
+  syncProgress(25,'OneDrive-Datenstand pruefen');
   const root=await appRoot(token),meta=await remoteMeta(token,root.id);
   let base=await getSyncBase();
   if(!meta){
    if(downloadOnly){if(!silent)alert('Noch kein Datenbestand in OneDrive.');return false}
+   await saveSyncSafetySnapshot('Vor erstem OneDrive-Abgleich');
    const payload=cloneData(state);payload.sync={};
    const saved=await uploadJson(token,root.id,'htl-praxis-data.json',payload,{'If-None-Match':'*'});
    if(before!==dataFingerprint(state))throw Error('Waehrend des Abgleichs wurden weitere lokale Aenderungen vorgenommen. Bitte erneut synchronisieren.');
@@ -541,6 +562,7 @@ async function syncNow({silent=false,downloadOnly=false,resolutions={}}={}){
   if(base&&meta.eTag===state.sync?.remoteETag&&dataEqual(syncData(state),base)){
    if(!silent){closeModal();alert('Bereits aktuell – keine Aenderungen.')}return true;
   }
+  syncProgress(42,'OneDrive-Daten herunterladen');
   const remoteRaw=await downloadState(token,root.id);const remote=migrate(cloneData(typeof remoteRaw==='string'?JSON.parse(remoteRaw):remoteRaw));
   if(before!==dataFingerprint(state))throw Error('Lokale Daten haben sich waehrend des Downloads geaendert. Bitte erneut synchronisieren.');
   const local=syncData(state),cloud=syncData(remote);
@@ -548,13 +570,10 @@ async function syncNow({silent=false,downloadOnly=false,resolutions={}}={}){
   if(!base&&state.sync?.remoteETag&&state.sync.remoteETag===meta.eTag)base=cloud;
   let merged;
   if(!base){
-   if(dataEqual(local,cloud))merged=cloud;
-   else if(!state.sync?.dirtySince)merged=cloud;
-   else{
-    state.sync.lastError='Erster Abgleich: unterschiedliche lokale und Cloud-Daten ohne gemeinsamen Basisstand. Bitte Backup exportieren und die Daten manuell pruefen.';
-    if(!silent)alert(state.sync.lastError);
-    updateHeaderStatus();return false;
-   }
+   // Ohne gemeinsamen Basisstand niemals einen kompletten Stand uebernehmen.
+   // Bei unterschiedlichen Werten manueller Konflikt statt stiller Ueberschreibung.
+   const conflicts=[];merged=mergeThree(undefined,local,cloud,'',conflicts,resolutions);
+   if(conflicts.length){state.sync.lastError='Erster Abgleich: unterschiedliche Daten ohne gemeinsamen Basisstand. Bitte Konflikte pruefen.';updateHeaderStatus();if(!silent)showSyncConflicts(conflicts,resolutions);return false}
   }else{
    const conflicts=[];merged=mergeThree(base,local,cloud,'',conflicts,resolutions);
    if(conflicts.length){
@@ -564,22 +583,28 @@ async function syncNow({silent=false,downloadOnly=false,resolutions={}}={}){
     return false;
    }
   }
+  syncProgress(62,'Daten auf Unterschiede pruefen');
   if(downloadOnly&& !dataEqual(local,merged)){
    if(!dataEqual(local,base||cloud)){
     if(!silent)alert('Es gibt lokale Aenderungen. Bitte „Jetzt abgleichen“ verwenden, um sie mit der Cloud zusammenzufuehren.');return false;
    }
   }
   if(dataEqual(merged,cloud)){
+   if(!dataEqual(local,merged))await saveSyncSafetySnapshot('Vor Uebernahme aus OneDrive');
+   syncProgress(83,'Zusammengefuehrte Daten lokal sichern');
    applySyncData(merged);await commitSync(remote,meta);renderAfterSync();if(!silent){closeModal();alert('OneDrive ist aktuell. Aenderungen wurden uebernommen.')}return true;
   }
   // Cloud nur bei unveraendertem ETag ersetzen. Bei parallelem Schreibzugriff wird 412 gemeldet.
+  syncProgress(72,'Sicherheitskopien erstellen');
+  await saveSyncSafetySnapshot('Vor OneDrive-Upload und Datenzusammenfuehrung');
   await makeRemoteBackup(token,root.id,remoteRaw);
   const payload={...remote,...merged,sync:{}};
+  syncProgress(85,'Daten sicher zu OneDrive uebertragen');
   const saved=await uploadJson(token,root.id,'htl-praxis-data.json',payload,{'If-Match':meta.eTag});
   if(before!==dataFingerprint(state))throw Error('Lokale Aenderung waehrend des Uploads. Cloud ist gespeichert; bitte erneut abgleichen, um die neue Aenderung zu uebernehmen.');
   applySyncData(merged);await commitSync(payload,saved);renderAfterSync();if(!silent){closeModal();alert('Aenderungen beider Geraete erfolgreich zusammengefuehrt.')}return true;
- }catch(e){if(e.status===412||e.status===409)e=new Error('Ein anderes Geraet hat gleichzeitig gespeichert. Nichts ueberschrieben; bitte erneut abgleichen.');syncError(e,silent);return false}
- finally{syncBusy=false}
+ }catch(e){syncProgress(100,'Abgleich angehalten: '+(e?.message||String(e)),true);if(e.status===412||e.status===409)e=new Error('Ein anderes Geraet hat gleichzeitig gespeichert. Nichts ueberschrieben; bitte erneut abgleichen.');syncError(e,silent);return false}
+ finally{syncBusy=false;if(document.getElementById('syncProgress7531')&&!document.getElementById('syncProgress7531').onclick)syncProgress(100,'Abgleich beendet – Status in OneDrive pruefen',true)}
 }
 // Lesbare Konfliktanzeige; die eigentliche 3-Wege-Merge-Logik bleibt unveraendert.
 const SYNC_FIELD_LABELS={
@@ -661,8 +686,8 @@ async function syncPull({silent=false}={}){return syncNow({silent,downloadOnly:t
 async function syncPush({silent=false}={}){return syncNow({silent})}
 function scheduleAutoSync(){if(!state?.settings?.autoSync||!navigator.onLine||syncBusy||editingInProgress())return;clearTimeout(autoSyncTimer);autoSyncTimer=setTimeout(()=>autoSyncNow(),7000)}
 async function autoSyncNow(){if(!state?.settings?.autoSync||!navigator.onLine||syncBusy||editingInProgress())return false;return syncNow({silent:true})}
-function syncDialog(){const s=state.sync||{};openModal(`<h2>OneDrive Synchronisierung</h2><p>Automatischer 3-Wege-Abgleich: Aenderungen an verschiedenen Schuelern, Einheiten und Feldern werden zusammengefuehrt. Bei gleichzeitiger Bearbeitung desselben Feldes wird sicherheitshalber angehalten.</p><div class="system-grid"><div><b>Letzter Abgleich</b><br>${escapeHtml(s.lastSyncedAt?new Date(s.lastSyncedAt).toLocaleString('de-AT'):'noch nie')}</div><div><b>Lokale Aenderungen</b><br>${s.dirtySince?'ja':'nein'}</div><div><b>Auto-Sync</b><br>${state.settings.autoSync?'ein':'aus'}</div><div><b>Status</b><br>${escapeHtml(s.lastError?'Pruefen':'bereit')}</div></div>${s.lastError?`<div class="notice error-note">${escapeHtml(s.lastError)}</div>`:''}<div class="field"><p><b>Microsoft-Anmeldung</b>: Bei abgelaufener Anmeldung hier erneut anmelden. Die lokalen Daten bleiben erhalten.</p><button type="button" class="btn secondary" id="reauthMicrosoft">Erneut bei Microsoft anmelden</button> <button type="button" class="btn secondary" id="reauthRedirect">Anmeldung über Weiterleitung</button></div><div class="field"><label><input type="checkbox" id="autoSyncToggle" ${state.settings.autoSync?'checked':''}> Automatisch abgleichen (bei Aenderungen und regelmaessig)</label></div><div class="modal-actions"><button class="btn secondary" id="syncBackup">Backup exportieren</button><button class="btn secondary" id="pull">Cloud laden (nur ohne lokale Aenderungen)</button><button class="btn" id="push">Jetzt abgleichen</button></div>`);
- document.getElementById('push').onclick=()=>syncNow({silent:false});document.getElementById('pull').onclick=()=>syncPull({silent:false});document.getElementById('syncBackup').onclick=exportBackup;document.getElementById('reauthMicrosoft').onclick=()=>reauthenticateMicrosoft(false);document.getElementById('reauthRedirect').onclick=()=>{if(confirm('Die App wird zur Microsoft-Anmeldung weitergeleitet. Vorher bitte ein Backup exportieren, falls lokale Aenderungen vorhanden sind. Fortfahren?'))reauthenticateMicrosoft(true)};
+function syncDialog(){const s=state.sync||{};openModal(`<h2>OneDrive Synchronisierung</h2><p><b>Keine automatische Loeschung:</b> Fehlende Cloud- oder Lokaldaten werden beim Abgleich bewahrt. Vor kritischen Datenwechseln wird lokal eine Sicherheitskopie angelegt. Ein altes Backup gezielt wiederherzustellen ist ein gesonderter Vorgang.</p><p>Automatischer 3-Wege-Abgleich: Aenderungen an verschiedenen Schuelern, Einheiten und Feldern werden zusammengefuehrt. Bei gleichzeitiger Bearbeitung desselben Feldes wird sicherheitshalber angehalten.</p><div class="system-grid"><div><b>Letzter Abgleich</b><br>${escapeHtml(s.lastSyncedAt?new Date(s.lastSyncedAt).toLocaleString('de-AT'):'noch nie')}</div><div><b>Lokale Aenderungen</b><br>${s.dirtySince?'ja':'nein'}</div><div><b>Auto-Sync</b><br>${state.settings.autoSync?'ein':'aus'}</div><div><b>Status</b><br>${escapeHtml(s.lastError?'Pruefen':'bereit')}</div></div>${s.lastError?`<div class="notice error-note">${escapeHtml(s.lastError)}</div>`:''}<div class="field"><p><b>Microsoft-Anmeldung</b>: Bei abgelaufener Anmeldung hier erneut anmelden. Die lokalen Daten bleiben erhalten.</p><button type="button" class="btn secondary" id="reauthMicrosoft">Erneut bei Microsoft anmelden</button> <button type="button" class="btn secondary" id="reauthRedirect">Anmeldung über Weiterleitung</button></div><div class="field"><label><input type="checkbox" id="autoSyncToggle" ${state.settings.autoSync?'checked':''}> Automatisch abgleichen (bei Aenderungen und regelmaessig)</label></div><div class="modal-actions"><button class="btn secondary" id="syncBackup">Backup exportieren</button><button class="btn" id="push">Mit OneDrive abgleichen</button></div>`);
+ document.getElementById('push').onclick=()=>syncNow({silent:false});document.getElementById('syncBackup').onclick=exportBackup;document.getElementById('reauthMicrosoft').onclick=()=>reauthenticateMicrosoft(false);document.getElementById('reauthRedirect').onclick=()=>{if(confirm('Die App wird zur Microsoft-Anmeldung weitergeleitet. Vorher bitte ein Backup exportieren, falls lokale Aenderungen vorhanden sind. Fortfahren?'))reauthenticateMicrosoft(true)};
  document.getElementById('autoSyncToggle').onchange=e=>{state.settings.autoSync=e.target.checked;saveState();if(e.target.checked)scheduleAutoSync()};}
 function updateHeaderStatus(){const el=document.getElementById('syncStatus');if(!el||!state)return;const s=state.sync||{};el.textContent=s.lastError?(isMicrosoftAuthError(s.lastError)?'OneDrive: Anmeldung erforderlich':'OneDrive: Konflikt/Fehler'):s.dirtySince?'OneDrive: lokal geaendert':s.lastSyncedAt?'OneDrive: aktuell':'OneDrive: lokal';el.className='sync-status '+(s.lastError?'bad':s.dirtySince?'':'good')}
 

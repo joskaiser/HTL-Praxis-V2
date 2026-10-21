@@ -1,0 +1,13 @@
+Version 7.5.31 - OneDrive-Synchronisation Sicherheit und Status
+
+- Cloud laden aus der normalen Synchronisationsansicht entfernt.
+- Ein sicherer bidirektionaler Abgleich ist die einzige normale Sync-Aktion.
+- Fehlende Datenfelder und fehlende ID-Datensaetze werden nicht als Loeschung interpretiert.
+- Ohne gemeinsamen Basisstand kein stilles Ersetzen durch die Cloud.
+- Vor lokalen Datenwechseln und Cloud-Uploads wird eine Sicherheitskopie in IndexedDB abgelegt (sync-safety-...).
+- Vor Cloud-Uploads wird weiterhin eine Remote-Sicherung in OneDrive/Backups erstellt.
+- Fortschrittsbalken zeigt Arbeitsphasen, KEINE echte Byte-Uebertragungsrate.
+
+WICHTIG: Explizite Loeschungen werden beim Abgleich derzeit nicht geraeteuebergreifend propagiert; dafuer sind in einer spaeteren Version Loeschmarkierungen noetig.
+Die Sicherheitskopien in IndexedDB sind noch nicht ueber die Benutzeroberflaeche wiederherstellbar.
+Vor dem Einsatz Datenbackup exportieren und Synchronisierung mit zwei Testgeraeten pruefen.
