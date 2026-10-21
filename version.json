@@ -1,6 +1,6 @@
 {
-  "version": "7.5.31",
+  "version": "7.5.32",
   "dataSchema": 4,
   "released": "2026-10-20",
-  "notes": "7.5.31 plus PDF-Anhänge für Bewertungs- und Werkstückfelder und visuell getrennte Bewertungskategorien."
+  "notes": "7.5.32 plus PDF-Anhänge für Bewertungs- und Werkstückfelder und visuell getrennte Bewertungskategorien."
 }

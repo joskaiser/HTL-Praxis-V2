@@ -1,0 +1,9 @@
+i-i_Doku 7.5.32 – Synchronisationskorrektur (Teststand)
+
+- Netzwerk- und HTTP-Fehler werden in verständlichem Deutsch dargestellt.
+- Ein fehlgeschlagener Abgleich zeigt nie 100 % Erfolg.
+- Erfolg wird erst nach Speicherung und bei Upload nach erneutem Lesen/Prüfen des Cloud-Datenstands angezeigt.
+- Wiederholte automatische Synchronisationsversuche werden nach einem Fehler vorsorglich deaktiviert.
+- Der bestehende 3-Wege-Abgleich und lokale Sicherungen bleiben erhalten.
+
+ACHTUNG: Kein Live-Test mit Microsoft-Konto oder zwei Geräten erfolgt. Vor Installation vollständiges Backup exportieren; zunächst mit Testdaten prüfen.
