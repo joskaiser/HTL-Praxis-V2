@@ -1,6 +1,6 @@
 {
-  "version": "7.5.40",
+  "version": "7.5.42",
   "dataSchema": 4,
   "released": "2026-10-21",
-  "notes": "Fehlende Unterlagen unter Profilfoto, Warnsymbol in Uebersicht, Mehrfachzuweisung mit Einzelstatus"
+  "notes": "Schuelerauswahl nach Gruppen mit Fotos, Suche und Gruppenauswahl"
 }
