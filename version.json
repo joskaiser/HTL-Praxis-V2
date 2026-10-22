@@ -1,6 +1,6 @@
 {
-  "version": "7.5.37",
+  "version": "7.5.38",
   "dataSchema": 4,
   "released": "2026-10-21",
-  "notes": "Einheitsbezogene Schüler-/Themen-/Materialauslosung mit Dokumentation"
+  "notes": "Gruppenweite Auslosungshistorie, Auslosungsthema, Loeschung und Versionsanzeige"
 }
