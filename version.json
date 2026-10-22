@@ -1,6 +1,6 @@
 {
-  "version": "7.5.42",
+  "version": "7.5.43",
   "dataSchema": 4,
   "released": "2026-10-21",
-  "notes": "Schuelerauswahl nach Gruppen mit Fotos, Suche und Gruppenauswahl"
+  "notes": "Zufallsgenerator: groessere Ansicht, Vollbild und bearbeitbare Gruppenhistorie"
 }

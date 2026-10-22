@@ -211,3 +211,20 @@ dialog.general-movable-dialog .modal-close{z-index:8}
 
 /* 7.5.41: grouped, searchable student assignment with portraits */
 .task-student-toolbar{display:flex;align-items:center;gap:10px;margin:8px 0}.task-student-toolbar input{flex:1;min-width:0}.task-student-choices{display:block;max-height:350px;overflow:auto;padding:10px}.task-student-group{margin-bottom:14px}.task-student-group-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 2px;border-bottom:1px solid var(--line);margin-bottom:8px}.task-student-group-head .btn{font-size:12px;padding:5px 9px}.task-student-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}.task-student-card{display:flex!important;align-items:center;gap:9px;border:1px solid var(--line);border-radius:9px;padding:7px;cursor:pointer;min-width:0;background:var(--card,#fff)}.task-student-card:has(input:checked){border-color:#2779ae;background:#e8f4fc}.task-student-card input{flex:none!important;width:18px!important;height:18px}.task-student-avatar{width:42px;height:42px;min-width:42px;border-radius:50%;overflow:hidden;background:#dbe4eb;display:flex;align-items:center;justify-content:center;font-weight:700}.task-student-avatar img{width:100%;height:100%;object-fit:cover}.task-student-name{overflow-wrap:anywhere}.task-student-card[hidden],.task-student-group[hidden]{display:none!important}@media(max-width:520px){.task-student-grid{grid-template-columns:1fr}.task-student-choices{max-height:290px}}
+
+/* Classroom lottery presentation and editable history */
+dialog.lottery-dialog{width:min(960px,96vw);max-width:96vw;max-height:94dvh;overflow:auto}
+dialog.lottery-dialog.lottery-expanded{width:98vw;max-width:98vw;max-height:98dvh}
+dialog.lottery-dialog:fullscreen{width:100vw;max-width:none;height:100dvh;max-height:none;border-radius:0;overflow:auto;background:#f3f6f8}
+.lottery-layout{width:100%;min-width:0}
+.lottery-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-right:36px}
+.lottery-heading h2{margin:0}
+.lottery-view-actions{display:flex;gap:8px;flex-wrap:wrap}
+.lottery-stage{min-height:220px!important}
+.lottery-expanded .lottery-stage,dialog.lottery-dialog:fullscreen .lottery-stage{min-height:48dvh!important}
+.lottery-expanded .lottery-stage img,dialog.lottery-dialog:fullscreen .lottery-stage img{max-height:32dvh!important;max-width:min(50vw,480px)!important;object-fit:contain}
+.lottery-stage h2{font-size:clamp(24px,4vw,58px)}
+.lottery-history-table{min-width:1040px}
+.lottery-history-table input,.lottery-history-table select{width:100%;min-width:110px;padding:7px;border:1px solid #ccd5da;border-radius:6px}
+.lottery-history-table input[type=number]{min-width:70px;max-width:90px}
+@media(max-width:650px){dialog.lottery-dialog{width:100vw;max-width:100vw;max-height:100dvh;border-radius:0}.lottery-heading{padding-right:24px}.lottery-view-actions .btn{padding:8px}}
