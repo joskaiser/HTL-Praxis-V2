@@ -1,6 +1,6 @@
 {
-  "version": "7.5.39",
+  "version": "7.5.40",
   "dataSchema": 4,
   "released": "2026-10-21",
-  "notes": "Individuelle Schueleraufgaben, Vermerke, Materialien und mobile Layoutkorrektur"
+  "notes": "Fehlende Unterlagen unter Profilfoto, Warnsymbol in Uebersicht, Mehrfachzuweisung mit Einzelstatus"
 }
