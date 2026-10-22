@@ -1,6 +1,6 @@
 {
-  "version": "7.5.38",
+  "version": "7.5.39",
   "dataSchema": 4,
   "released": "2026-10-21",
-  "notes": "Gruppenweite Auslosungshistorie, Auslosungsthema, Loeschung und Versionsanzeige"
+  "notes": "Individuelle Schueleraufgaben, Vermerke, Materialien und mobile Layoutkorrektur"
 }
