@@ -4,7 +4,7 @@ function imageIntake7528(options){
  const opts=options||{};
  const overlay=document.createElement('div');
  overlay.style.cssText='position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.58);display:flex;align-items:center;justify-content:center;padding:16px';
- overlay.innerHTML='<section role="dialog" aria-modal="true" aria-label="Bild oder Datei einfuegen" style="background:var(--card,#fff);color:var(--text,#222);padding:22px;border-radius:12px;max-width:480px;width:100%;box-shadow:0 12px 35px #0005"><h2>Foto / Skizze einfuegen</h2><p>Screenshot kopieren und hier <b>Strg + V</b> druecken oder eine Datei auswaehlen. Bilder koennen auch hierher gezogen werden.</p><div data-drop style="border:2px dashed #888;border-radius:10px;padding:20px;text-align:center;margin:12px 0">Bild aus Zwischenablage oder Datei hier ablegen</div><p data-status aria-live="polite"></p><div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button type="button" data-cancel class="btn secondary">Abbrechen</button><button type="button" data-select class="btn">Datei auswaehlen</button></div><input type="file" data-file hidden></section>';
+ overlay.innerHTML='<section role="dialog" aria-modal="true" aria-label="Bild oder Datei einfuegen" style="background:var(--card,#fff);color:var(--text,#222);padding:22px;border-radius:12px;max-width:480px;width:100%;box-shadow:0 12px 35px #0005"><h2>Foto / Skizze einfuegen</h2><p>Screenshot kopieren und hier <b>Strg + V</b> druecken oder eine Datei auswaehlen. Bilder koennen auch hierher gezogen werden.</p><div data-drop style="border:2px dashed #888;border-radius:10px;padding:20px;text-align:center;margin:12px 0">Bild aus Zwischenablage oder Datei hier ablegen</div><p data-status aria-live="polite"></p><div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button type="button" data-cancel class="btn secondary">Abbrechen</button><button type="button" data-camera class="btn secondary">📷 Foto aufnehmen</button><button type="button" data-select class="btn">Datei auswählen</button></div><input type="file" data-file hidden></section>';
  const input=overlay.querySelector('[data-file]'),drop=overlay.querySelector('[data-drop]'),status=overlay.querySelector('[data-status]');
  input.accept=opts.accept||'image/*,.pdf';
  let busy=false;
@@ -14,6 +14,8 @@ function imageIntake7528(options){
  function key(e){if(e.key==='Escape'){e.preventDefault();close()}}
  overlay.querySelector('[data-cancel]').onclick=close;
  overlay.querySelector('[data-select]').onclick=()=>input.click();
+ const camera=document.createElement('input');camera.type='file';camera.accept='image/*';camera.setAttribute('capture','environment');camera.hidden=true;overlay.appendChild(camera);
+ overlay.querySelector('[data-camera]').onclick=()=>camera.click();camera.onchange=()=>{if(camera.files?.[0])receive(camera.files[0]);camera.value=''};
  input.onchange=()=>{if(input.files?.[0])receive(input.files[0])};
  overlay.addEventListener('dragover',e=>{e.preventDefault();drop.style.borderColor='#1684d8'});
  overlay.addEventListener('dragleave',()=>{drop.style.borderColor='#888'});

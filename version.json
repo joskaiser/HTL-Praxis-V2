@@ -1,6 +1,6 @@
 {
-  "version": "7.5.43",
+  "version": "7.5.44",
   "dataSchema": 4,
   "released": "2026-10-21",
-  "notes": "Zufallsgenerator: groessere Ansicht, Vollbild und bearbeitbare Gruppenhistorie"
+  "notes": "Konfliktvergleich lokal/cloud, Wisch-Zurueck, Kamera-Schaltflaeche"
 }

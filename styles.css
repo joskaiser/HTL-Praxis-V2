@@ -228,3 +228,5 @@ dialog.lottery-dialog:fullscreen{width:100vw;max-width:none;height:100dvh;max-he
 .lottery-history-table input,.lottery-history-table select{width:100%;min-width:110px;padding:7px;border:1px solid #ccd5da;border-radius:6px}
 .lottery-history-table input[type=number]{min-width:70px;max-width:90px}
 @media(max-width:650px){dialog.lottery-dialog{width:100vw;max-width:100vw;max-height:100dvh;border-radius:0}.lottery-heading{padding-right:24px}.lottery-view-actions .btn{padding:8px}}
+
+.camera-direct-btn{margin:8px 8px 8px 0;max-width:100%;white-space:normal}
