@@ -1,6 +1,6 @@
 {
-  "version": "7.5.44",
+  "version": "7.5.45",
   "dataSchema": 4,
-  "released": "2026-10-21",
-  "notes": "Konfliktvergleich lokal/cloud, Wisch-Zurueck, Kamera-Schaltflaeche"
+  "released": "2026-11-19",
+  "notes": "Versionsabgleich korrigiert, SW in Schuelerbericht, Anwesenheits-Haken"
 }
