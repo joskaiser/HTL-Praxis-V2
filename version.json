@@ -1,6 +1,6 @@
 {
-  "version": "7.5.48",
+  "version": "7.5.49",
   "dataSchema": 4,
   "released": "2026-11-19",
-  "notes": "Mobile Konfliktwahl: Version 1 und Version 2 mit tatsächlichen Werten, einzeln auswählbar"
+  "notes": "Gruppenauswertung: Gruppeneinheiten vorausgewählt, weitere optional; mobile Bedienung optimiert"
 }

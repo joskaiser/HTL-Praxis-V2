@@ -230,3 +230,8 @@ dialog.lottery-dialog:fullscreen{width:100vw;max-width:none;height:100dvh;max-he
 @media(max-width:650px){dialog.lottery-dialog{width:100vw;max-width:100vw;max-height:100dvh;border-radius:0}.lottery-heading{padding-right:24px}.lottery-view-actions .btn{padding:8px}}
 
 .camera-direct-btn{margin:8px 8px 8px 0;max-width:100%;white-space:normal}
+
+/* V7.5.49: mobile report controls */
+.report-unit-actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.report-unit-text{display:flex;flex-direction:column;gap:2px;min-width:0;overflow-wrap:anywhere}.report-unit-text small{color:var(--muted,#667085)}.report-unit{align-items:flex-start;min-width:0}.report-unit input{flex-shrink:0;margin-top:5px}.report-unit:has(input:checked){border-color:#397fb6;background:rgba(57,127,182,.07)}
+@media(max-width:650px){.report-unit-settings{padding:12px!important}.report-unit-list{grid-template-columns:1fr;max-height:320px;gap:6px}.report-unit-actions{display:grid;grid-template-columns:1fr 1fr}.report-unit-actions button{width:100%;font-size:12px;white-space:normal;min-height:42px}.report-unit-actions button:first-child:not([hidden]){grid-column:1/-1}.report-unit{padding:11px;min-height:56px}.report-settings .form-grid{grid-template-columns:1fr 1fr;gap:9px}.report-settings .field{min-width:0}.report-settings select{max-width:100%;width:100%}.report-settings .inline-check{display:flex;align-items:flex-start;gap:8px;margin:10px 0}.report-settings .inline-check input{flex-shrink:0}.view-header .toolbar{display:flex;gap:7px}.view-header .toolbar .btn{flex:1;min-width:0}}
+@media(max-width:380px){.report-settings .form-grid{grid-template-columns:1fr}}
