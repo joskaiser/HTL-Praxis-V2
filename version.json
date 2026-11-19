@@ -1,6 +1,6 @@
 {
-  "version": "7.5.46",
+  "version": "7.5.47",
   "dataSchema": 4,
   "released": "2026-11-19",
-  "notes": "Gruppenwechsel, Erinnerung, Laufblatt mit Schulwochen, Fehlstunden und Noten"
+  "notes": "Synchronisationskonflikte: lokale und Cloudfassung direkt per Auswahlkarte wählen"
 }

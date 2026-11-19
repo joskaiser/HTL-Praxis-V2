@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION='7.5.46';
+const APP_VERSION='7.5.47';
 const DATA_SCHEMA_VERSION=4;
 const DB_NAME='htl-praxis-db';
 const DB_STORE='app';
@@ -707,23 +707,35 @@ function syncConflictValue(v){
 function showSyncConflicts(conflicts,previous={}){
  const rows=conflicts.slice(0,40).map((c,i)=>{
   const d=syncConflictDescription(c.path);
+  const option=(kind,title,description,value)=>`<label class="sync-choice-card" style="display:block;border:2px solid ${previous[c.path]===kind?'#2563eb':'#cbd5e1'};border-radius:10px;padding:12px;min-width:0;cursor:pointer;background:${previous[c.path]===kind?'#eff6ff':'transparent'}">
+    <div style="display:flex;align-items:center;gap:8px"><input type="radio" name="confChoice${i}" data-resolve="${i}" value="${kind}" ${previous[c.path]===kind?'checked':''}><strong>${title}</strong></div>
+    <div class="small" style="margin:5px 0;color:#52677a">${description}</div>
+    <pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:190px;overflow:auto;margin:0">${escapeHtml(syncConflictValue(value))}</pre>
+   </label>`;
   return `<section class="sync-conflict-item" style="border:1px solid #cbd5e1;border-radius:10px;padding:14px;margin:12px 0">
    <div class="small" style="color:#52677a">Konflikt ${i+1} von ${conflicts.length} · ${escapeHtml(d.location)}</div>
-   <b>${escapeHtml(d.field)}</b>
-   <div class="sync-conflict-compare" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:12px 0">
-    <div style="border:1px solid #d8e0e8;border-radius:7px;padding:10px;min-width:0"><b>Dieser Computer (lokal)</b><pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:190px;overflow:auto;margin-bottom:0">${escapeHtml(syncConflictValue(c.local))}</pre></div>
-    <div style="border:1px solid #d8e0e8;border-radius:7px;padding:10px;min-width:0"><b>OneDrive (Cloud)</b><pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:190px;overflow:auto;margin-bottom:0">${escapeHtml(syncConflictValue(c.remote))}</pre></div>
+   <b>${escapeHtml(d.field)}</b><p class="small">Wähle direkt die Fassung, die erhalten bleiben soll:</p>
+   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:12px 0">
+    ${option('local','Auf diesem Computer behalten','Lokal gespeichert auf diesem Gerät; wird beim Abgleich in OneDrive übernommen.',c.local)}
+    ${option('remote','Cloudversion behalten','Aktuell in OneDrive gespeichert; wird auf diesem Gerät übernommen.',c.remote)}
    </div>
-   <label for="confChoice${i}">Welche Fassung soll übernommen werden?</label>
-   <select id="confChoice${i}" data-resolve="${i}" style="width:100%"><option value="">Bitte entscheiden</option><option value="local" ${previous[c.path]==='local'?'selected':''}>Lokale Fassung – dieser Computer</option><option value="remote" ${previous[c.path]==='remote'?'selected':''}>OneDrive-Fassung – Cloud</option></select>
    <details style="margin-top:9px"><summary>Technische Details anzeigen</summary><code style="overflow-wrap:anywhere">${escapeHtml(c.path)}</code></details>
   </section>`;
  }).join('');
- openModal(`<h2>Synchronisationskonflikt</h2><div class="notice"><b>Links: Lokal</b> = Daten auf diesem Gerät (Handy oder Desktop). <b>Rechts: Cloud</b> = Daten in OneDrive. Die App-Version ist nicht die Datenversion. Entscheide anhand des Inhalts, nicht allein anhand des Datums.<br><b>Letzter erfolgreicher Abgleich:</b> ${escapeHtml(state.sync?.lastSyncedAt?new Date(state.sync.lastSyncedAt).toLocaleString("de-AT"):"unbekannt")}<br><b>Lokale Änderungen seit:</b> ${escapeHtml(state.sync?.dirtySince?new Date(state.sync.dirtySince).toLocaleString("de-AT"):"nicht bekannt")}<br><b>Cloud zuletzt geändert:</b> ${escapeHtml(state.sync?.remoteModifiedAt?new Date(state.sync.remoteModifiedAt).toLocaleString("de-AT"):"nicht bekannt")}</div><p>${conflicts.length} Felder wurden parallel geändert. Vergleiche die Werte und entscheide für jedes Feld. Vor der Bestätigung wird nichts überschrieben.</p>${rows}${conflicts.length>40?'<p>Mehr als 40 Konflikte: Bitte zuerst Daten sichern und manuell prüfen.</p>':''}<div class="modal-actions"><button class="btn secondary" id="confBackup">Backup exportieren</button><button class="btn secondary" id="confClose">Abbrechen</button><button class="btn" id="confResolve" ${conflicts.length>40?'disabled':''}>Auswahl übernehmen und abgleichen</button></div>`);
+ openModal(`<h2>Synchronisationskonflikt</h2><div class="notice"><b>Lokale Version</b> = Daten auf diesem Computer/Gerät. <b>Cloudversion</b> = Daten in OneDrive. Das ist unabhängig von der App-Versionsnummer. Die Entscheidung erfolgt pro geändertem Feld.<br><b>Letzter erfolgreicher Abgleich:</b> ${escapeHtml(state.sync?.lastSyncedAt?new Date(state.sync.lastSyncedAt).toLocaleString('de-AT'):'unbekannt')}<br><b>Lokale Änderungen seit:</b> ${escapeHtml(state.sync?.dirtySince?new Date(state.sync.dirtySince).toLocaleString('de-AT'):'nicht bekannt')}<br><b>Cloud zuletzt geändert:</b> ${escapeHtml(state.sync?.remoteModifiedAt?new Date(state.sync.remoteModifiedAt).toLocaleString('de-AT'):'nicht bekannt')}</div><p>${conflicts.length} Konflikt(e). Die angezeigten Werte kommen aus dem aktuellen Abgleich. Vor der Bestätigung wird nichts überschrieben.</p><div class="modal-actions"><button type="button" class="btn secondary" id="confAllLocal">Alle lokal</button><button type="button" class="btn secondary" id="confAllCloud">Alle Cloud</button></div>${rows}${conflicts.length>40?'<p>Mehr als 40 Konflikte: Bitte zuerst Daten sichern und manuell prüfen.</p>':''}<div class="modal-actions"><button class="btn secondary" id="confBackup">Backup exportieren</button><button class="btn secondary" id="confClose">Abbrechen</button><button class="btn" id="confResolve" ${conflicts.length>40?'disabled':''}>Ausgewählte Fassungen übernehmen und abgleichen</button></div>`);
+ const updateCards=()=>document.querySelectorAll('.sync-choice-card').forEach(card=>{const selected=!!card.querySelector('input:checked');card.style.borderColor=selected?'#2563eb':'#cbd5e1';card.style.background=selected?'#eff6ff':'transparent'});
+ document.querySelectorAll('input[data-resolve]').forEach(r=>r.addEventListener('change',updateCards));
+ const chooseAll=kind=>{document.querySelectorAll(`input[data-resolve][value="${kind}"]`).forEach(r=>{r.checked=true});updateCards()};
+ document.getElementById('confAllLocal').onclick=()=>chooseAll('local');
+ document.getElementById('confAllCloud').onclick=()=>chooseAll('remote');
  document.getElementById('confBackup').onclick=exportBackup;
  document.getElementById('confClose').onclick=closeModal;
  document.getElementById('confResolve').onclick=()=>{
-  const choices={...previous};for(let i=0;i<conflicts.length;i++){const value=document.querySelector(`[data-resolve="${i}"]`).value;if(!value){alert('Bitte für jeden Konflikt eine Fassung auswählen.');return}choices[conflicts[i].path]=value}
+  const choices={...previous};for(let i=0;i<conflicts.length;i++){
+   const checked=document.querySelector(`input[data-resolve="${i}"]:checked`);
+   if(!checked){alert('Bitte für jeden Konflikt eine Fassung auswählen.');return}
+   choices[conflicts[i].path]=checked.value;
+  }
   closeModal();syncNow({silent:false,resolutions:choices});
  };
 }
