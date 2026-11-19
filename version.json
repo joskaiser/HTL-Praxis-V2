@@ -1,6 +1,6 @@
 {
-  "version": "7.5.45",
+  "version": "7.5.46",
   "dataSchema": 4,
   "released": "2026-11-19",
-  "notes": "Versionsabgleich korrigiert, SW in Schuelerbericht, Anwesenheits-Haken"
+  "notes": "Gruppenwechsel, Erinnerung, Laufblatt mit Schulwochen, Fehlstunden und Noten"
 }
