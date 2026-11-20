@@ -1,6 +1,6 @@
 {
-  "version": "7.5.50",
+  "version": "7.5.51",
   "dataSchema": 4,
   "released": "2026-11-19",
-  "notes": "Anwesenheitshaken direkt in Gruppentabelle, standardmaessig anwesend, Fehlzeiten bei Anwesenheit gesperrt"
+  "notes": "Anwesend und ganztags abwesend, Anwesenheitszahl, Suppliereinheit"
 }
