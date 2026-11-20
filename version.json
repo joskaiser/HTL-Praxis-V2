@@ -1,6 +1,6 @@
 {
-  "version": "7.5.49",
+  "version": "7.5.50",
   "dataSchema": 4,
   "released": "2026-11-19",
-  "notes": "Gruppenauswertung: Gruppeneinheiten vorausgewählt, weitere optional; mobile Bedienung optimiert"
+  "notes": "Anwesenheitshaken direkt in Gruppentabelle, standardmaessig anwesend, Fehlzeiten bei Anwesenheit gesperrt"
 }
