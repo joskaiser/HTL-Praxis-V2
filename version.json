@@ -1,6 +1,6 @@
 {
-  "version": "7.5.52",
+  "version": "7.5.53",
   "dataSchema": 4,
   "released": "2026-11-19",
-  "notes": "Laufblatt: Zeitraum aus Einheiten mit Daten, Endnoten aus gewichteten Bewertungen"
+  "notes": "Gruppenauswertung: Offline PDF-Ablage als ZIP mit Einzelberichten und Gesamtuebersicht"
 }

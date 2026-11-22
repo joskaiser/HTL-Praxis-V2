@@ -75,7 +75,7 @@ function renderReport(cid='',gid='',sid=''){
  const classes=state.classes.filter(c=>c.yearId===state.activeYear);
  let excluded=new Set();
  let reportUnitScope="group"; // group selection defaults to its own units
- view.innerHTML=`<div class="view-header"><div><h2>Gesamtauswertung / PDF</h2><div class="sub">Gruppen- und Schülerstatistik · alle ausgewählten Unterrichtseinheiten</div></div><div class="toolbar">${htmlBtn('Zurück','reportBack')}<button class="btn" id="reportPrint">Drucken / PDF</button></div></div>
+ view.innerHTML=`<div class="view-header"><div><h2>Gesamtauswertung / PDF</h2><div class="sub">Gruppen- und Schülerstatistik · alle ausgewählten Unterrichtseinheiten</div></div><div class="toolbar">${htmlBtn('Zurück','reportBack')}<button class="btn" id="reportPrint">Drucken / PDF</button><button class="btn secondary" id="reportPdfArchive">PDF-Ablage (ZIP)</button></div></div>
  <div class="section-card report-settings"><div class="form-grid"><div class="field"><label>Klasse</label><select id="reportClass"><option value="">Alle Klassen</option>${classes.map(c=>`<option value="${c.id}" ${c.id===cid?'selected':''}>${esc(c.code)}</option>`).join('')}</select></div><div class="field"><label>Gruppe</label><select id="reportGroup"></select></div><div class="field"><label>Schüler</label><select id="reportStudent"></select></div>
  <div class="field"><label>Papier</label><select id="reportPaper"><option>A4</option><option>A3</option></select></div><div class="field"><label>Ausrichtung</label><select id="reportOrientation"><option value="portrait">Hochformat</option><option value="landscape">Querformat</option></select></div><div class="field"><label>Seitenanpassung</label><select id="reportFit"><option value="width">An Seitenbreite</option><option value="height">An Seitenhöhe</option></select></div></div>
  <label class="inline-check"><input id="reportThumbs" type="checkbox"> Unterrichtsunterlagen als Miniaturansichten anhängen</label> <label class="inline-check"><input id="reportNotes" type="checkbox"> Notizen anzeigen</label> <label class="inline-check"><input id="reportShowWeights" type="checkbox"> Gewichtungen im Bericht anzeigen</label></div>
@@ -114,6 +114,33 @@ function renderReport(cid='',gid='',sid=''){
  sc.onchange=()=>{gid='';sid='';fill()};sg.onchange=()=>{sid='';document.getElementById('reportOtherUnits').checked=false;resetUnitSelection();fillStudents();unitUI();draw()};ss.onchange=draw;document.getElementById('reportNotes').onchange=draw;document.getElementById('reportShowWeights').onchange=draw;document.getElementById('reportThumbs').onchange=draw;
  document.getElementById('reportOtherUnits').onchange=()=>{unitUI();draw()};document.getElementById('reportDefaultUnits').onclick=()=>{resetUnitSelection();unitUI();draw()};document.getElementById('reportAllUnits').onclick=()=>{units().forEach(u=>excluded.delete(u.id));unitUI();draw()};document.getElementById('reportNoUnits').onclick=()=>{allUnits().forEach(u=>excluded.add(u.id));unitUI();draw()};
  document.getElementById('reportCleanLegacyZero').onclick=()=>{const entries=Object.values(state.records||{}).flatMap(r=>Object.entries(r.ratings||{}).filter(([,v])=>v===0).map(([k])=>({r,k})));if(!entries.length)return alert('Keine gespeicherten 0-Werte gefunden.');if(!confirm(`${entries.length} gespeicherte 0-Bewertungen gefunden. 0 bedeutet grundsätzlich nicht bewertet. Gespeicherte Nullwerte jetzt entfernen?`))return;for(const {r,k} of entries)delete r.ratings[k];saveState();draw();alert(`${entries.length} Bewertungen auf „nicht bewertet“ gesetzt.`)};
+ document.getElementById('reportPdfArchive').onclick=async()=>{
+  const button=document.getElementById('reportPdfArchive');
+  const invalid=state.classes.filter(c=>c.yearId===state.activeYear&&(!sc.value||c.id===sc.value)).filter(c=>Math.abs(RUBRICS.reduce((a,k)=>a+(Number(classWeights(c.id)[k])||0),0)-100)>0.01);
+  if(invalid.length)return alert('Gewichtung muss je Klasse 100 % ergeben: '+invalid.map(c=>c.code).join(', '));
+  const people=reportData(sc.value,sg.value,ss.value).students;
+  if(!people.length)return alert('Keine Schüler für die PDF-Ablage ausgewählt.');
+  if(!confirm(`${people.length} Schüler-PDF(s) und eine Gesamtübersicht als ZIP-Datei erstellen?`))return;
+  button.disabled=true;button.textContent='PDFs werden erstellt ...';
+  try{
+   const files=[],overall=[['Schüler','Klasse / Gruppe','Punkte','Gew. Durchschnitt','Note','Fehl-UE'].join(' | ')];
+   for(const person of people){
+    const c=cls(person.classId),g=c.groups.find(x=>x.id===person.groupId),w=classWeights(c.id);
+    const rows=selectedUnits(person).map(u=>({u,r:getRecord(person.id,u.id,false),d:scoreDetail(getRecord(person.id,u.id,false),w,u.id)}));
+    const rated=rows.filter(x=>x.d?.average!=null),weighted=rated.reduce((a,x)=>a+x.d.weightedPoints,0),weight=rated.reduce((a,x)=>a+x.d.weightSum,0),avg=weight?weighted/weight:null;
+    const missing=rows.reduce((a,x)=>a+calcMissedUE(c,x.r),0),points=rows.reduce((a,x)=>a+(x.d?.points||0),0),note=gradeFor(c.id,avg);
+    const fmtPdf=v=>v==null||!Number.isFinite(v)?'-':v.toFixed(2).replace('.',',');
+    overall.push([person.name,c.code+' / '+(g?.name||''),points,fmtPdf(avg),note,fmtPdf(missing)].join(' | '));
+    const lines=['Schülerauswertung - '+person.name,'Klasse: '+c.code+' | Gruppe: '+(g?.name||''),'Schuljahr: '+(currentYear()?.label||''),'Ausgewählte Einheiten: '+rows.length,'','Gesamtpunkte: '+points+' | Gewichteter Durchschnitt: '+fmtPdf(avg)+' / 10','Note: '+note+' | Fehl-UE: '+fmtPdf(missing),'','Unterrichtseinheiten:'];
+    for(const {u,r,d} of rows){lines.push('SW '+schoolWeek(u.date)+' | '+fmtDate(u.date)+' | '+(u.topic||'Ohne Thema'));lines.push('  Punkte: '+(d?.points??'-')+' | Ø: '+fmtPdf(d?.average)+' | Note: '+gradeFor(c.id,d?.average)+' | Fehl-UE: '+fmtPdf(calcMissedUE(c,r)));lines.push('  '+RUBRICS.map(k=>k+': '+(validRating(r?.ratings?.[k])??'-')).join(' | '));if(document.getElementById('reportNotes').checked&&r?.comment)lines.push('  Notiz: '+r.comment);}
+    files.push({name:pdfSafeName(c.code+'_'+(g?.name||'Gruppe')+'_'+person.name)+'.pdf',data:pdfTextDocument(lines)});
+   }
+   const summary=['Gruppenauswertung - Gesamtübersicht','Schuljahr: '+(currentYear()?.label||''),'Erstellt: '+new Date().toLocaleString('de-AT'),'Schüler: '+people.length,'Ausgewählte Unterrichtseinheiten: '+allUnits().filter(u=>!excluded.has(u.id)).length,'',...overall];
+   files.unshift({name:'00_Gesamtuebersicht.pdf',data:pdfTextDocument(summary)});
+   const zip=pdfZipArchive(files),url=URL.createObjectURL(new Blob([zip],{type:'application/zip'})),link=document.createElement('a');
+   link.href=url;link.download=pdfSafeName('HTL_Praxis_'+(cls(sc.value)?.code||'Auswertung')+'_'+(sg.selectedOptions[0]?.textContent||'Alle')+'_'+new Date().toISOString().slice(0,10))+'.zip';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+  }catch(err){console.error(err);alert('PDF-Ablage fehlgeschlagen: '+err.message)}finally{button.disabled=false;button.textContent='PDF-Ablage (ZIP)'}
+ };
  document.getElementById('reportPrint').onclick=async()=>{const invalid=state.classes.filter(c=>c.yearId===state.activeYear&&(!document.getElementById('reportClass').value||c.id===document.getElementById('reportClass').value)).filter(c=>Math.abs(RUBRICS.reduce((a,k)=>a+(Number(classWeights(c.id)[k])||0),0)-100)>0.01);if(invalid.length){alert('Gewichtung muss je Klasse 100 % ergeben: '+invalid.map(c=>c.code).join(', '));return}const paper=document.getElementById('reportPaper').value,orientation=document.getElementById('reportOrientation').value,fit=document.getElementById('reportFit').value;let style=document.getElementById('dynamicReportPrint');if(!style){style=document.createElement('style');style.id='dynamicReportPrint';document.head.append(style)}style.textContent=`@page{size:${paper} ${orientation};margin:9mm}@media print{.report-page{break-inside:avoid-page}.report-table{font-size:${fit==='height'?'8':'9'}pt}.report-page .table-wrap{overflow:visible}.report-page table{width:100%;max-width:100%;table-layout:fixed;overflow-wrap:anywhere}.report-page{max-width:100%;box-sizing:border-box}.report-page .table-wrap{width:100%;max-width:100%}${fit==='height'?'.report-page{font-size:9pt;padding:6px!important}':''}}`;try{await reportLoadMiniatures(document.getElementById('reportBody'))}catch(e){alert('Miniaturansichten konnten nicht vollständig geladen werden: '+e.message+'\nDer Bericht kann trotzdem gedruckt werden.')}window.print()};fill();
 }
 
@@ -134,4 +161,24 @@ async function reportLoadMiniatures(root){
    }
   }catch(e){grid.textContent='Vorschau nicht verfügbar: '+e.message}
  }
+}
+
+// Offline PDF and ZIP writer: no external service, no dependency on a CDN.
+function pdfSafeName(value){return String(value||'Datei').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_.-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,105)||'Datei'}
+function pdfTextDocument(lines){
+ const enc=new TextEncoder(),plain=s=>String(s??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/ß/g,'ss').replace(/[^\x20-\x7e]/g,'?');
+ const wrapped=[];for(const line of lines){let text=plain(line);if(!text){wrapped.push('');continue}while(text.length>105){let pos=text.lastIndexOf(' ',105);if(pos<35)pos=105;wrapped.push(text.slice(0,pos));text=text.slice(pos).trimStart()}wrapped.push(text)}
+ const pages=[];for(let i=0;i<wrapped.length;i+=57)pages.push(wrapped.slice(i,i+57));if(!pages.length)pages.push([]);
+ const objects=[null,null,null,null],pageRefs=[];
+ const fontId=3;objects[fontId]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
+ for(const page of pages){const pageId=objects.length,contentId=pageId+1;pageRefs.push(pageId);const stream=['BT /F1 9 Tf 38 800 Td 12 TL',...page.map((line,i)=>(i?'T* ':'')+'('+line.replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)')+') Tj'),'ET'].join('\n');objects.push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 '+fontId+' 0 R >> >> /Contents '+contentId+' 0 R >>');objects.push('<< /Length '+enc.encode(stream).length+' >>\nstream\n'+stream+'\nendstream')}
+ objects[1]='<< /Type /Catalog /Pages 2 0 R >>';objects[2]='<< /Type /Pages /Kids ['+pageRefs.map(i=>i+' 0 R').join(' ')+'] /Count '+pageRefs.length+' >>';
+ let output='%PDF-1.4\n',offsets=[0];for(let i=1;i<objects.length;i++){offsets[i]=enc.encode(output).length;output+=i+' 0 obj\n'+objects[i]+'\nendobj\n'}const xref=enc.encode(output).length;output+='xref\n0 '+objects.length+'\n0000000000 65535 f \n';for(let i=1;i<objects.length;i++)output+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';output+='trailer\n<< /Size '+objects.length+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';return enc.encode(output)
+}
+function pdfZipArchive(files){
+ const enc=new TextEncoder(),chunks=[],central=[];let offset=0;const u16=n=>[n&255,(n>>>8)&255],u32=n=>[n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255];
+ const crc32=data=>{let c=0xffffffff;for(const b of data){c^=b;for(let k=0;k<8;k++)c=(c>>>1)^((c&1)?0xedb88320:0)}return(c^0xffffffff)>>>0};
+ const add=bytes=>{const data=Uint8Array.from(bytes);chunks.push(data);offset+=data.length};
+ for(const f of files){const name=enc.encode(f.name),data=f.data,crc=crc32(data),start=offset;add([...u32(0x04034b50),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0),...name]);add(data);central.push([...u32(0x02014b50),...u16(20),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(start),...name])}
+ const start=offset;for(const c of central)add(c);const size=offset-start;add([...u32(0x06054b50),...u16(0),...u16(0),...u16(files.length),...u16(files.length),...u32(size),...u32(start),...u16(0)]);const out=new Uint8Array(offset);let pos=0;for(const c of chunks){out.set(c,pos);pos+=c.length}return out
 }
