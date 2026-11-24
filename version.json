@@ -1,6 +1,6 @@
 {
-  "version": "7.5.54",
+  "version": "7.5.56",
   "dataSchema": 4,
   "released": "2026-11-24",
-  "notes": "Sync Herkunft und Klartext; vollstaendige Einzelberichte ueber Druckdialog"
+  "notes": "Mobile Synchronisierung: Wiederholungsversuche, Fehlerstatus und Schutz lokaler Änderungen"
 }

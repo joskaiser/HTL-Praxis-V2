@@ -235,3 +235,17 @@ dialog.lottery-dialog:fullscreen{width:100vw;max-width:none;height:100dvh;max-he
 .report-unit-actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.report-unit-text{display:flex;flex-direction:column;gap:2px;min-width:0;overflow-wrap:anywhere}.report-unit-text small{color:var(--muted,#667085)}.report-unit{align-items:flex-start;min-width:0}.report-unit input{flex-shrink:0;margin-top:5px}.report-unit:has(input:checked){border-color:#397fb6;background:rgba(57,127,182,.07)}
 @media(max-width:650px){.report-unit-settings{padding:12px!important}.report-unit-list{grid-template-columns:1fr;max-height:320px;gap:6px}.report-unit-actions{display:grid;grid-template-columns:1fr 1fr}.report-unit-actions button{width:100%;font-size:12px;white-space:normal;min-height:42px}.report-unit-actions button:first-child:not([hidden]){grid-column:1/-1}.report-unit{padding:11px;min-height:56px}.report-settings .form-grid{grid-template-columns:1fr 1fr;gap:9px}.report-settings .field{min-width:0}.report-settings select{max-width:100%;width:100%}.report-settings .inline-check{display:flex;align-items:flex-start;gap:8px;margin:10px 0}.report-settings .inline-check input{flex-shrink:0}.view-header .toolbar{display:flex;gap:7px}.view-header .toolbar .btn{flex:1;min-width:0}}
 @media(max-width:380px){.report-settings .form-grid{grid-template-columns:1fr}}
+
+/* 7.5.55: readable mobile actions, no clipped labels */
+@media screen and (max-width: 700px){
+ .toolbar,.modal-actions,.unit-bar,.section-title-row,.lesson757-heading,.lesson757-file,.lesson757-nav,.lesson757-tools,.photo-actions,.report-unit-actions,.topbar{flex-wrap:wrap!important;gap:8px!important;min-width:0;max-width:100%;}
+ .btn,button:not(.timepicker-number):not(.work-photo-remove):not(.modal-close){white-space:normal!important;text-overflow:clip!important;overflow-wrap:anywhere;max-width:100%;height:auto;line-height:1.25;}
+ .toolbar .btn,.view-header .toolbar .btn,.modal-actions .btn,.unit-bar .btn,.report-unit-actions .btn{flex:1 1 145px!important;min-width:min(145px,100%)!important;min-height:44px;padding:9px 10px;}
+ .view-header,.section-title-row{align-items:stretch;flex-wrap:wrap;}
+ .view-header>div,.modal-body,.field{min-width:0;max-width:100%;}
+ dialog{box-sizing:border-box;width:calc(100% - 16px);max-width:calc(100% - 16px);max-height:92dvh;overflow:auto;}
+ .modal-body{box-sizing:border-box;padding:14px;}
+ .form-grid,.report-settings .form-grid{grid-template-columns:minmax(0,1fr)!important;}
+ .report-unit-actions{display:flex!important;}
+ .table-wrap{max-width:100%;overflow-x:auto;}
+}

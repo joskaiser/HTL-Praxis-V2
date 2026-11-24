@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION='7.5.54';
+const APP_VERSION='7.5.56';
 const DATA_SCHEMA_VERSION=4;
 const DB_NAME='htl-praxis-db';
 const DB_STORE='app';
@@ -92,8 +92,8 @@ async function idbSet(key,val){const db=await openDb();return new Promise((resol
 async function loadState(){try{const idb=await idbGet('state');if(idb)return migrate(idb);const raw=localStorage.getItem(STORAGE_KEY)||localStorage.getItem(OLD_STORAGE_KEY);if(raw){const st=migrate(JSON.parse(raw));await idbSet('state',st);return st}return makeInitialState()}catch(e){console.warn('State load failed',e);return makeInitialState()}}
 let state=null,route={type:'dashboard'},activePhotoTarget=null,activeCurriculumClassId=null,saveTimer=null,autoSyncTimer=null;
 function editingInProgress(){const el=document.activeElement;return !!(el&&el.matches('input:not([type=checkbox]):not([type=radio]),textarea,[contenteditable=true]')&& (view.contains(el)||modal.contains(el)));}
-function renderAfterSync(){if(editingInProgress())return;render();}
-function saveState(){if(!state)return;if(!syncBusy){state.sync=state.sync||{};state.sync.dirtySince=state.sync.dirtySince||new Date().toISOString()}clearTimeout(saveTimer);saveTimer=setTimeout(()=>idbSet('state',state).catch(e=>console.warn('IndexedDB save failed',e)),50);renderNav();scheduleAutoSync()}
+function renderAfterSync(){if(editingInProgress()){document.activeElement.addEventListener('blur',()=>{if(!modal.open)render()},{once:true});return;}render();}
+function saveState(){if(!state)return;state.sync=state.sync||{};state.sync.dirtySince=state.sync.dirtySince||new Date().toISOString();clearTimeout(saveTimer);saveTimer=setTimeout(()=>idbSet('state',state).catch(e=>console.warn('IndexedDB save failed',e)),50);renderNav();scheduleAutoSync()}
 function cls(id){return state.classes.find(x=>x.id===id)}
 function student(id){return state.students.find(x=>x.id===id)}
 function classStudents(cid){return state.students.filter(s=>s.classId===cid)}
@@ -110,7 +110,7 @@ function teacherPresence(c,u){const sch=classSchedule(c,u),total=classScheduleMi
 
 const view=document.getElementById('view'),modal=document.getElementById('modal');
 function openModal(html){if(modal.open)modal.close();modal.innerHTML=`<div class="modal-body"><button type="button" class="modal-close" aria-label="Fenster schließen" title="Schließen">×</button>${html}<div class="modal-footer-close"><button type="button" class="btn secondary" data-close-modal>Schließen</button></div></div>`;modal.querySelector(".modal-close").onclick=closeModal;modal.querySelector("[data-close-modal]").onclick=closeModal;modal.showModal()}
-function closeModal(){if(modal.open)modal.close()}
+function closeModal(){if(modal.open)modal.close();scheduleAutoSync()}
 modal.addEventListener("click",e=>{if(e.target===modal && !modal.classList.contains("general-movable-dialog"))closeModal()});
 // Checklist windows close only through their explicit close control.
 modal.addEventListener("cancel",e=>{if(modal.classList.contains("general-movable-dialog"))e.preventDefault()});
@@ -234,7 +234,7 @@ function unitDialog(cid,unitId,gid){
  }
  if(u){
   noteField.addEventListener('input',()=>{
-   u.notes=noteField.value;
+   u.notes=noteField.value;saveState();
    noteStatus.textContent='Notiz wird gespeichert …';
    clearTimeout(noteSaveDelay);
    noteSaveDelay=setTimeout(()=>{saveState();noteStatus.textContent='Notiz gespeichert (lokal; OneDrive-Abgleich ausstehend)'},350);
@@ -572,9 +572,9 @@ function syncProgress(percent,message,status='running'){
 
 async function commitSync(remote,meta){const localPrefs={clientId:state.settings?.clientId,tenantId:state.settings?.tenantId,autoSync:state.settings?.autoSync};
  const base=syncData(remote);await idbSet(SYNC_BASE_KEY,base);
- state.sync={...(state.sync||{}),remoteETag:meta?.eTag||'',remoteModifiedAt:meta?.lastModifiedDateTime||'',lastSyncedAt:new Date().toISOString(),lastError:'',dirtySince:''};
+ state.sync={...(state.sync||{}),remoteETag:meta?.eTag||'',remoteModifiedAt:meta?.lastModifiedDateTime||'',lastSyncedAt:new Date().toISOString(),lastError:'',dirtySince:dataEqual(syncData(state),base)?'':(state.sync?.dirtySince||new Date().toISOString()),conflicts:[]};
  state.settings={...state.settings,...localPrefs};await idbSet('state',state);updateHeaderStatus();}
-function syncError(e,silent){state.sync=state.sync||{};state.sync.lastError=syncErrorGerman(e);state.sync.lastFailedAt=new Date().toISOString();if(state.settings?.autoSync){state.settings.autoSync=false;state.sync.lastError+=' Automatischer Abgleich wurde vorsorglich deaktiviert.'}idbSet('state',state).catch(console.warn);updateHeaderStatus();refreshSyncDialogStatus();if(!silent)alert(state.sync.lastError)}
+function syncError(e,silent){state.sync=state.sync||{};state.sync.lastError=syncErrorGerman(e);state.sync.lastFailedAt=new Date().toISOString();idbSet('state',state).catch(console.warn);updateHeaderStatus();refreshSyncDialogStatus();if(!silent)alert(state.sync.lastError)}
 async function syncNow({silent=false,downloadOnly=false,resolutions={}}={}){
  if(syncBusy){if(!silent)alert('Ein OneDrive-Abgleich läuft bereits. Bitte dessen Abschluss abwarten.');return false;}
  syncBusy=true;syncAttempt++;syncLive={phase:'running',message:'Abgleich gestartet',verified:false,startedAt:Date.now()};
@@ -582,6 +582,7 @@ async function syncNow({silent=false,downloadOnly=false,resolutions={}}={}){
  const before=dataFingerprint(state);
  try{
   syncProgress(12,'Microsoft-Anmeldung pruefen');
+  clearTimeout(saveTimer);await idbSet('state',state);
   const token=await getGraphToken(!silent);
   if(!token){syncProgress(12,'Microsoft-Anmeldung erforderlich – kein Datenabgleich erfolgt','error');return false} // Redirect-Anmeldung laeuft
   syncProgress(25,'OneDrive-Datenstand pruefen');
@@ -612,14 +613,14 @@ async function syncNow({silent=false,downloadOnly=false,resolutions={}}={}){
    // Ohne gemeinsamen Basisstand niemals einen kompletten Stand uebernehmen.
    // Bei unterschiedlichen Werten manueller Konflikt statt stiller Ueberschreibung.
    const conflicts=[];merged=mergeThree(undefined,local,cloud,'',conflicts,resolutions);
-   if(conflicts.length){state.sync.lastError='Erster Abgleich: unterschiedliche Daten ohne gemeinsamen Basisstand. Bitte Konflikte pruefen.';updateHeaderStatus();syncProgress(62,'Datenkonflikt – kein Abgleich durchgeführt','error');if(!silent)showSyncConflicts(conflicts,resolutions);return false}
+   if(conflicts.length){state.sync.lastError='Erster Abgleich: unterschiedliche Daten ohne gemeinsamen Basisstand. Bitte Konflikte pruefen.';updateHeaderStatus();syncProgress(62,'Datenkonflikt – kein Abgleich durchgeführt','error');if(!silent)showSyncConflicts(conflicts,resolutions);await idbSet('state',state);return false}
   }else{
    const conflicts=[];merged=mergeThree(base,local,cloud,'',conflicts,resolutions);
    if(conflicts.length){
     state.sync.lastError=conflicts.length+' gleichzeitige Aenderung(en) am selben Datenfeld. Kein automatisches Ueberschreiben.';
     state.sync.conflicts=conflicts.map(c=>c.path);
     updateHeaderStatus();syncProgress(62,'Datenkonflikt – kein Abgleich durchgeführt','error');if(!silent)showSyncConflicts(conflicts,resolutions);
-    return false;
+    await idbSet('state',state);return false;
    }
   }
   syncProgress(62,'Daten auf Unterschiede pruefen');
@@ -631,6 +632,7 @@ async function syncNow({silent=false,downloadOnly=false,resolutions={}}={}){
   if(dataEqual(merged,cloud)){
    if(before!==dataFingerprint(state))throw Error('Lokale Daten wurden während des Abgleichs geändert. Bitte erneut synchronisieren.');
    if(!dataEqual(local,merged))await saveSyncSafetySnapshot('Vor Uebernahme aus OneDrive');
+   if(before!==dataFingerprint(state))throw Error('Lokale Daten wurden während der Sicherung geändert. Bitte erneut synchronisieren.');
    syncProgress(83,'Zusammengefuehrte Daten lokal sichern');
    applySyncData(merged);await commitSync(remote,meta);renderAfterSync();syncProgress(100,'Cloud-Daten erfolgreich geprüft und lokal gesichert','success');if(!silent){closeModal();alert('OneDrive ist aktuell. Aenderungen wurden uebernommen.')}return true;
   }
@@ -638,6 +640,7 @@ async function syncNow({silent=false,downloadOnly=false,resolutions={}}={}){
   syncProgress(72,'Sicherheitskopien erstellen');
   await saveSyncSafetySnapshot('Vor OneDrive-Upload und Datenzusammenfuehrung');
   await makeRemoteBackup(token,root.id,remoteRaw);
+  if(before!==dataFingerprint(state))throw Error('Lokale Daten wurden während der Sicherung geändert. Bitte erneut synchronisieren.');
   const payload={...remote,...merged,sync:{}};
   syncProgress(85,'Daten sicher zu OneDrive uebertragen');
   const saved=await uploadJson(token,root.id,'htl-praxis-data.json',payload,{'If-Match':meta.eTag});
@@ -650,7 +653,7 @@ async function syncNow({silent=false,downloadOnly=false,resolutions={}}={}){
   if(before!==dataFingerprint(state))throw Error('Lokale Aenderung waehrend des Uploads. Cloud ist gespeichert; bitte erneut abgleichen, um die neue Aenderung zu uebernehmen.');
   applySyncData(merged);await commitSync(payload,saved);renderAfterSync();syncProgress(100,'Daten in OneDrive überprüft – Abgleich erfolgreich','success');if(!silent){closeModal();alert('Aenderungen beider Geraete erfolgreich zusammengefuehrt.')}return true;
  }catch(e){syncError(e,silent);syncProgress(0,state.sync.lastError,'error');return false}
- finally{syncBusy=false}
+ finally{syncBusy=false;refreshSyncDialogStatus();if(state.sync?.dirtySince||state.sync?.lastError)scheduleAutoSync()}
 
 }
 // Lesbare Konfliktanzeige; die eigentliche 3-Wege-Merge-Logik bleibt unveraendert.
@@ -747,28 +750,20 @@ async function syncPush({silent=false}={}){return syncNow({silent})}
 // 7.5.36: Debounce for edits; remote metadata-only checks when local data is clean.
 const AUTO_SYNC_DELAY=30000, AUTO_CHECK_INTERVAL=300000;
 let lastAutoAttempt=0;
+document.addEventListener('focusout',()=>scheduleAutoSync());
+function autoSyncBlocked(){return !state?.settings?.autoSync||!navigator.onLine||document.hidden||isMicrosoftAuthError(state.sync?.lastError)||/Daten ohne gemeinsamen Basisstand|gleichzeitige Aenderung/i.test(state.sync?.lastError||'');}
 function scheduleAutoSync(){
  clearTimeout(autoSyncTimer);
- if(!state?.settings?.autoSync||!navigator.onLine||syncBusy||editingInProgress()||state.sync?.lastError)return;
- autoSyncTimer=setTimeout(()=>autoSyncNow(),AUTO_SYNC_DELAY);
+ if(autoSyncBlocked())return;
+ const delay=state.sync?.lastError?120000:AUTO_SYNC_DELAY;
+ autoSyncTimer=setTimeout(()=>autoSyncNow(),delay);
 }
 async function autoSyncNow(){
- if(!state?.settings?.autoSync||!navigator.onLine||syncBusy||editingInProgress()||state.sync?.lastError)return false;
- if(Date.now()-lastAutoAttempt<25000)return false;
+ if(autoSyncBlocked())return false;
+ if(syncBusy||modal.open){scheduleAutoSync();return false;}
+ if(editingInProgress()){scheduleAutoSync();return false;}
+ if(Date.now()-lastAutoAttempt<25000){scheduleAutoSync();return false;}
  lastAutoAttempt=Date.now();
- // A clean local copy only needs a cheap metadata request; full sync on changes.
- if(!state.sync?.dirtySince&&state.sync?.remoteETag){
-  syncBusy=true;
-  try{
-   const token=await getGraphToken(false);if(!token)return false;
-   const root=await appRoot(token),meta=await remoteMeta(token,root.id);
-   if(meta?.eTag===state.sync.remoteETag){
-    state.sync.lastCheckedAt=new Date().toISOString();
-    await idbSet('state',state);syncLive={phase:'success',message:'OneDrive-Datenstand geprüft – unverändert',verified:true,startedAt:Date.now()};updateHeaderStatus();refreshSyncDialogStatus();return true;
-   }
-  }catch(e){syncError(e,true);return false}
-  finally{syncBusy=false}
- }
  return syncNow({silent:true});
 }
 function syncDialog(){const s=state.sync||{};openModal(`<h2>OneDrive Synchronisierung</h2><p><b>Keine automatische Loeschung:</b> Fehlende Cloud- oder Lokaldaten werden beim Abgleich bewahrt. Vor kritischen Datenwechseln wird lokal eine Sicherheitskopie angelegt. Ein altes Backup gezielt wiederherzustellen ist ein gesonderter Vorgang.</p><p>Automatischer 3-Wege-Abgleich: Aenderungen an verschiedenen Schuelern, Einheiten und Feldern werden zusammengefuehrt. Bei gleichzeitiger Bearbeitung desselben Feldes wird sicherheitshalber angehalten.</p><div class="system-grid"><div><b>Letzter Abgleich</b><br>${escapeHtml(s.lastSyncedAt?new Date(s.lastSyncedAt).toLocaleString('de-AT'):'noch nie')}</div><div><b>Lokale Aenderungen</b><br>${s.dirtySince?'ja':'nein'}</div><div><b>Auto-Sync</b><br>${state.settings.autoSync?'ein':'aus'}</div><div><b>Status</b><br><span id="syncDialogStatus7533">${escapeHtml(s.lastError?'Fehler – bitte prüfen':s.lastSyncedAt?'Letzter Abgleich erfolgreich':'Noch kein Abgleich')}</span></div></div><div id="syncDialogError7533" class="notice error-note" ${s.lastError?'':'hidden'}>${escapeHtml(s.lastError||'')}</div><div class="field"><p><b>Microsoft-Anmeldung</b>: Bei abgelaufener Anmeldung hier erneut anmelden. Die lokalen Daten bleiben erhalten.</p><button type="button" class="btn secondary" id="reauthMicrosoft">Erneut bei Microsoft anmelden</button> <button type="button" class="btn secondary" id="reauthRedirect">Anmeldung über Weiterleitung</button></div><div class="field"><label><input type="checkbox" id="autoSyncToggle" ${state.settings.autoSync?'checked':''}> Automatisch: nach Änderungen (30 Sekunden), Cloud prüfen (alle 5 Minuten)</label></div><div class="modal-actions"><button class="btn secondary" id="syncBackup">Backup exportieren</button><button class="btn" id="push">Mit OneDrive abgleichen</button></div>`);
@@ -779,7 +774,7 @@ function refreshSyncDialogStatus(){
  const s=state.sync||{};
  el.textContent=syncLive.phase==='running'?'Abgleich läuft':syncLive.phase==='error'?'Fehlgeschlagen':syncLive.phase==='success'?'Erfolgreich geprüft':s.lastError?'Fehler – bitte prüfen':s.lastSyncedAt?'Letzter Abgleich erfolgreich':'Noch kein Abgleich';
  const error=document.getElementById('syncDialogError7533');if(error){const msg=syncLive.phase==='error'?syncLive.message:s.lastError||'';error.textContent=msg;error.hidden=!msg;}
- const btn=document.getElementById('push');if(btn)btn.disabled=syncBusy;
+ const btn=document.getElementById('push');if(btn)btn.disabled=syncBusy;const toggle=document.getElementById('autoSyncToggle');if(toggle)toggle.checked=!!state.settings.autoSync;
 }
 function updateHeaderStatus(){
  const el=document.getElementById('syncStatus');if(!el||!state)return;
@@ -810,7 +805,10 @@ window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;const b=d
 
 // UI bindings
 function bindUi(){document.getElementById('btnLock').onclick=lockApplication;document.getElementById('btnDashboard').onclick=()=>{route={type:'dashboard'};render()};document.getElementById('btnImport').onclick=importDialog;document.getElementById('btnSettings').onclick=settingsDialog;document.getElementById('btnSync').onclick=syncDialog;document.getElementById('btnAddClass').onclick=addClassDialog;document.getElementById('yearSelect').onchange=e=>{state.activeYear=e.target.value;saveState();route={type:'dashboard'};render()};document.getElementById('fileImport').onchange=e=>{if(e.target.files[0])importCsv(e.target.files[0]);e.target.value=''};document.getElementById('curriculumImport').onchange=e=>{if(e.target.files[0])importCurriculumFile(e.target.files[0]);e.target.value=''};document.getElementById('photoPicker').onchange=e=>{if(e.target.files[0])processPhoto(e.target.files[0]);e.target.value=''};document.getElementById('btnInstall').onclick=async()=>{if(deferredInstallPrompt){deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;document.getElementById('btnInstall').hidden=true}else alert('Im Browser-Menü „App installieren“ bzw. am Handy „Zum Startbildschirm hinzufügen“ wählen.')};document.getElementById('applyUpdate').onclick=applyUpdate;document.getElementById('dismissUpdate').onclick=hideUpdateBanner}
-async function boot(){state=makeInitialState();await requireMicrosoftLogin();state=await loadState();applySchoolBranding();bindUi();initPlanning7528();render();updateHeaderStatus();await initPwa();window.addEventListener('online',()=>{updateHeaderStatus();if(state.settings.autoSync)autoSyncNow()});window.addEventListener('offline',updateHeaderStatus);window.addEventListener('focus',()=>{if(state.settings.autoSync&&Date.now()-lastAutoAttempt>AUTO_CHECK_INTERVAL)autoSyncNow()});setInterval(()=>{if(state.settings.autoSync&&navigator.onLine)autoSyncNow()},AUTO_CHECK_INTERVAL);if(state.settings.autoSync&&navigator.onLine)setTimeout(()=>autoSyncNow(),3000)}
+async function boot(){state=makeInitialState();await requireMicrosoftLogin();state=await loadState();if(/Automatischer Abgleich wurde vorsorglich deaktiviert/.test(state.sync?.lastError||'')){state.sync.lastError=state.sync.lastError.replace(/ Automatischer Abgleich wurde vorsorglich deaktiviert\./,'');state.settings.autoSync=true;await idbSet('state',state);}applySchoolBranding();bindUi();initPlanning7528();render();updateHeaderStatus();await initPwa();window.addEventListener('online',()=>{updateHeaderStatus();if(state.settings.autoSync)autoSyncNow()});window.addEventListener('offline',updateHeaderStatus);window.addEventListener('focus',()=>{if(state.settings.autoSync&&Date.now()-lastAutoAttempt>AUTO_CHECK_INTERVAL)autoSyncNow()});setInterval(()=>{if(state.settings.autoSync&&navigator.onLine)autoSyncNow()},AUTO_CHECK_INTERVAL);if(state.settings.autoSync&&navigator.onLine)setTimeout(()=>autoSyncNow(),3000)}
+document.addEventListener('focusout',()=>scheduleAutoSync());
+modal.addEventListener('close',()=>scheduleAutoSync());
+document.addEventListener('visibilitychange',()=>{if(!state)return;if(document.hidden){clearTimeout(saveTimer);idbSet('state',state).catch(console.warn)}else {updateHeaderStatus();scheduleAutoSync()}});
 boot();
 
 
