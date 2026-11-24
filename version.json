@@ -1,6 +1,6 @@
 {
-  "version": "7.5.53",
+  "version": "7.5.54",
   "dataSchema": 4,
-  "released": "2026-11-19",
-  "notes": "Gruppenauswertung: Offline PDF-Ablage als ZIP mit Einzelberichten und Gesamtuebersicht"
+  "released": "2026-11-24",
+  "notes": "Sync Herkunft und Klartext; vollstaendige Einzelberichte ueber Druckdialog"
 }

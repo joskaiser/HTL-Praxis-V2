@@ -75,7 +75,7 @@ function renderReport(cid='',gid='',sid=''){
  const classes=state.classes.filter(c=>c.yearId===state.activeYear);
  let excluded=new Set();
  let reportUnitScope="group"; // group selection defaults to its own units
- view.innerHTML=`<div class="view-header"><div><h2>Gesamtauswertung / PDF</h2><div class="sub">Gruppen- und Schülerstatistik · alle ausgewählten Unterrichtseinheiten</div></div><div class="toolbar">${htmlBtn('Zurück','reportBack')}<button class="btn" id="reportPrint">Drucken / PDF</button><button class="btn secondary" id="reportPdfArchive">PDF-Ablage (ZIP)</button></div></div>
+ view.innerHTML=`<div class="view-header"><div><h2>Gesamtauswertung / PDF</h2><div class="sub">Gruppen- und Schülerstatistik · alle ausgewählten Unterrichtseinheiten</div></div><div class="toolbar">${htmlBtn('Zurück','reportBack')}<button class="btn" id="reportPrint">Drucken / PDF</button><button class="btn secondary" id="reportFullPdf">Einzel-PDFs (vollständiger Druck)</button><button class="btn secondary" id="reportPdfArchive">PDF-Ablage (kompakt, ZIP)</button></div></div>
  <div class="section-card report-settings"><div class="form-grid"><div class="field"><label>Klasse</label><select id="reportClass"><option value="">Alle Klassen</option>${classes.map(c=>`<option value="${c.id}" ${c.id===cid?'selected':''}>${esc(c.code)}</option>`).join('')}</select></div><div class="field"><label>Gruppe</label><select id="reportGroup"></select></div><div class="field"><label>Schüler</label><select id="reportStudent"></select></div>
  <div class="field"><label>Papier</label><select id="reportPaper"><option>A4</option><option>A3</option></select></div><div class="field"><label>Ausrichtung</label><select id="reportOrientation"><option value="portrait">Hochformat</option><option value="landscape">Querformat</option></select></div><div class="field"><label>Seitenanpassung</label><select id="reportFit"><option value="width">An Seitenbreite</option><option value="height">An Seitenhöhe</option></select></div></div>
  <label class="inline-check"><input id="reportThumbs" type="checkbox"> Unterrichtsunterlagen als Miniaturansichten anhängen</label> <label class="inline-check"><input id="reportNotes" type="checkbox"> Notizen anzeigen</label> <label class="inline-check"><input id="reportShowWeights" type="checkbox"> Gewichtungen im Bericht anzeigen</label></div>
@@ -139,7 +139,25 @@ function renderReport(cid='',gid='',sid=''){
    files.unshift({name:'00_Gesamtuebersicht.pdf',data:pdfTextDocument(summary)});
    const zip=pdfZipArchive(files),url=URL.createObjectURL(new Blob([zip],{type:'application/zip'})),link=document.createElement('a');
    link.href=url;link.download=pdfSafeName('HTL_Praxis_'+(cls(sc.value)?.code||'Auswertung')+'_'+(sg.selectedOptions[0]?.textContent||'Alle')+'_'+new Date().toISOString().slice(0,10))+'.zip';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
-  }catch(err){console.error(err);alert('PDF-Ablage fehlgeschlagen: '+err.message)}finally{button.disabled=false;button.textContent='PDF-Ablage (ZIP)'}
+  }catch(err){console.error(err);alert('PDF-Ablage fehlgeschlagen: '+err.message)}finally{button.disabled=false;button.textContent='PDF-Ablage (kompakt, ZIP)'}
+ };
+ document.getElementById('reportFullPdf').onclick=async()=>{
+  const people=reportData(sc.value,sg.value,ss.value).students;
+  if(!people.length)return alert('Keine Schüler ausgewählt.');
+  const original=ss.value,oldTitle=document.title,root=document.getElementById('reportBody');
+  try{
+   for(const person of people){
+    if(!confirm('Vollständigen Bericht für '+person.name+' als PDF speichern? Im Druckdialog „Als PDF speichern“ auswählen.'))return;
+    ss.value=person.id;draw();document.title=pdfSafeName(person.name);
+    await Promise.all([...root.querySelectorAll('img')].map(async img=>{await img.decode();if(!img.naturalWidth)throw Error('Bild fehlt');}));
+    await document.getElementById('reportPrint').onclick();
+   }
+   if(confirm('Gesamtübersicht als PDF speichern?')){
+    ss.value=original;draw();document.title='00_Gesamtuebersicht';
+    root.querySelectorAll('.report-page').forEach(el=>{if(el.querySelector('.report-grade-feature')||el.classList.contains('report-attachments'))el.remove()});
+    await document.getElementById('reportPrint').onclick();
+   }
+  }catch(e){alert('PDF-Ausgabe unterbrochen: '+e.message)}finally{ss.value=original;document.title=oldTitle;draw()}
  };
  document.getElementById('reportPrint').onclick=async()=>{const invalid=state.classes.filter(c=>c.yearId===state.activeYear&&(!document.getElementById('reportClass').value||c.id===document.getElementById('reportClass').value)).filter(c=>Math.abs(RUBRICS.reduce((a,k)=>a+(Number(classWeights(c.id)[k])||0),0)-100)>0.01);if(invalid.length){alert('Gewichtung muss je Klasse 100 % ergeben: '+invalid.map(c=>c.code).join(', '));return}const paper=document.getElementById('reportPaper').value,orientation=document.getElementById('reportOrientation').value,fit=document.getElementById('reportFit').value;let style=document.getElementById('dynamicReportPrint');if(!style){style=document.createElement('style');style.id='dynamicReportPrint';document.head.append(style)}style.textContent=`@page{size:${paper} ${orientation};margin:9mm}@media print{.report-page{break-inside:avoid-page}.report-table{font-size:${fit==='height'?'8':'9'}pt}.report-page .table-wrap{overflow:visible}.report-page table{width:100%;max-width:100%;table-layout:fixed;overflow-wrap:anywhere}.report-page{max-width:100%;box-sizing:border-box}.report-page .table-wrap{width:100%;max-width:100%}${fit==='height'?'.report-page{font-size:9pt;padding:6px!important}':''}}`;try{await reportLoadMiniatures(document.getElementById('reportBody'))}catch(e){alert('Miniaturansichten konnten nicht vollständig geladen werden: '+e.message+'\nDer Bericht kann trotzdem gedruckt werden.')}window.print()};fill();
 }

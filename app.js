@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION='7.5.53';
+const APP_VERSION='7.5.54';
 const DATA_SCHEMA_VERSION=4;
 const DB_NAME='htl-praxis-db';
 const DB_STORE='app';
@@ -657,7 +657,7 @@ async function syncNow({silent=false,downloadOnly=false,resolutions={}}={}){
 const SYNC_FIELD_LABELS={
  showNotesInOverview:'Notiz in der Gruppenübersicht anzeigen',notes:'Notizen',topic:'Unterrichtsstoff',date:'Datum',
  teacherName:'Lehrperson',teacherArrive:'Ankunft Lehrperson',teacherLeave:'Ende Lehrperson',
- absent:'Ganztägig abwesend',arrive:'Kommt (Uhrzeit)',leave:'Geht (Uhrzeit)',
+ present:'Anwesenheit', substitute:'Suppliereinheit', absent:'Ganztägig abwesend',arrive:'Kommt (Uhrzeit)',leave:'Geht (Uhrzeit)',
  arriveReason:'Grund für spätes Kommen',leaveReason:'Grund für früheres Gehen',
  absenceOverride:'Manuelle Fehlstunden',topicOverride:'Individueller Unterrichtsstoff',
  comment:'Bemerkung',ratings:'Bewertungen',ratingNotes:'Bewertungsnotizen',ratingPhotos:'Bewertungsfotos',
@@ -693,7 +693,10 @@ function syncConflictDescription(path){
  const extra=parts.slice(section==='records'?2:2,-1).filter(x=>x!==last).map(syncFieldName);
  return {location:location.join(' → '),field:extra.length?extra.join(' → ')+' → '+field:field};
 }
-function syncConflictValue(v){
+function syncConflictValue(v,path=""){
+ const field=String(path).split(".").pop();
+ if(field==="present"&&typeof v==="boolean")return v?"Anwesend":"Nicht als vollständig anwesend markiert";
+ if(field==="absent"&&typeof v==="boolean")return v?"Ganztägig abwesend":"Nicht ganztägig abwesend";
  if(v===undefined)return 'Nicht vorhanden / gelöscht';
  if(v===null)return 'Leer (null)';
  if(typeof v==='boolean')return v?'Ja':'Nein';
@@ -711,9 +714,9 @@ function showSyncConflicts(conflicts,previous={}){
  const rows=visible.map((c,i)=>{
   const d=syncConflictDescription(c.path);
   const option=(kind,num,value)=>`<label class="sync-choice-card" style="display:block;border:2px solid #cbd5e1;border-radius:12px;padding:14px;cursor:pointer;min-width:0;margin:10px 0">
-   <div style="display:flex;align-items:center;gap:10px"><input type="radio" name="confChoice${i}" data-resolve="${i}" value="${kind}" ${previous[c.path]===kind?'checked':''} style="width:22px;height:22px;flex-shrink:0"><strong>Version ${num} übernehmen</strong></div>
+   <div style="display:flex;align-items:center;gap:10px"><input type="radio" name="confChoice${i}" data-resolve="${i}" value="${kind}" ${previous[c.path]===kind?'checked':''} style="width:22px;height:22px;flex-shrink:0"><strong>${kind==='local'?'Lokale Version – dieses Gerät':'Cloudversion – OneDrive'} übernehmen</strong></div>
    <div class="small" style="margin:8px 0 4px">Inhalt dieser Version:</div>
-   <pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;margin:0;padding:10px;border-radius:8px;background:rgba(125,125,125,.08);font:inherit">${escapeHtml(syncConflictValue(value))}</pre>
+   <pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;margin:0;padding:10px;border-radius:8px;background:rgba(125,125,125,.08);font:inherit">${escapeHtml(syncConflictValue(value,c.path))}</pre>${typeof value==='string'&&/^data:image\/(png|jpeg|webp|gif);base64,/.test(value)?`<img src="${escapeHtml(value)}" style="max-width:100%;max-height:240px" alt="Bild dieser Version">`:''}
   </label>`;
   return `<section class="sync-conflict-item" style="border:1px solid #cbd5e1;border-radius:12px;padding:14px;margin:12px 0">
    <div class="small">Unterschied ${i+1} von ${conflicts.length} · ${escapeHtml(d.location)}</div>
@@ -722,7 +725,7 @@ function showSyncConflicts(conflicts,previous={}){
    ${option('local',1,c.local)}${option('remote',2,c.remote)}
   </section>`;
  }).join('');
- openModal(`<h2>Unterschiedliche Daten gefunden</h2><p>Welche Daten möchtest du übernehmen? Die Herkunft der Version ist für die Auswahl nicht wichtig. <b>Vergleiche die angezeigten Werte.</b> Erst nach Bestätigung werden Änderungen synchronisiert.</p>${rows}${conflicts.length>40?'<p>Mehr als 40 Unterschiede: Bitte zuerst Daten sichern und manuell prüfen.</p>':''}<div class="modal-actions"><button type="button" class="btn secondary" id="confAllLocal">Überall Version 1</button><button type="button" class="btn secondary" id="confAllCloud">Überall Version 2</button></div><div class="modal-actions"><button class="btn secondary" id="confBackup">Backup exportieren</button><button class="btn secondary" id="confClose">Abbrechen</button><button class="btn" id="confResolve" ${conflicts.length>40?'disabled':''}>Ausgewählte Daten übernehmen</button></div>`);
+ openModal(`<h2>Unterschiedliche Daten gefunden</h2><p>Welche Daten möchtest du übernehmen? Die lokale Version stammt von diesem Gerät, die Cloudversion aus OneDrive. <b>Vergleiche die angezeigten Werte.</b> Erst nach Bestätigung werden Änderungen synchronisiert.</p>${rows}${conflicts.length>40?'<p>Mehr als 40 Unterschiede: Bitte zuerst Daten sichern und manuell prüfen.</p>':''}<div class="modal-actions"><button type="button" class="btn secondary" id="confAllLocal">Überall lokal</button><button type="button" class="btn secondary" id="confAllCloud">Überall OneDrive</button></div><div class="modal-actions"><button class="btn secondary" id="confBackup">Backup exportieren</button><button class="btn secondary" id="confClose">Abbrechen</button><button class="btn" id="confResolve" ${conflicts.length>40?'disabled':''}>Ausgewählte Daten übernehmen</button></div>`);
  const updateCards=()=>document.querySelectorAll('.sync-choice-card').forEach(card=>{const selected=!!card.querySelector('input:checked');card.style.borderColor=selected?'#2563eb':'#cbd5e1';card.style.background=selected?'rgba(37,99,235,.09)':'transparent'});
  document.querySelectorAll('input[data-resolve]').forEach(r=>r.addEventListener('change',updateCards));updateCards();
  const chooseAll=kind=>{document.querySelectorAll(`input[data-resolve][value="${kind}"]`).forEach(r=>{r.checked=true});updateCards()};
@@ -733,7 +736,7 @@ function showSyncConflicts(conflicts,previous={}){
  document.getElementById('confResolve').onclick=()=>{
   const choices={...previous};for(let i=0;i<conflicts.length;i++){
    const checked=document.querySelector(`input[data-resolve="${i}"]:checked`);
-   if(!checked){alert('Bitte für jeden Unterschied Version 1 oder Version 2 auswählen.');return}
+   if(!checked){alert('Bitte für jeden Unterschied die lokale Version oder Cloudversion auswählen.');return}
    choices[conflicts[i].path]=checked.value;
   }
   closeModal();syncNow({silent:false,resolutions:choices});
