@@ -1,6 +1,6 @@
 {
-  "version": "7.5.56",
+  "version": "7.5.57",
   "dataSchema": 4,
-  "released": "2026-11-24",
-  "notes": "Mobile Synchronisierung: Wiederholungsversuche, Fehlerstatus und Schutz lokaler Änderungen"
+  "released": "2026-11-25",
+  "notes": "Tag-basierte Bewertung und Dokumentation"
 }

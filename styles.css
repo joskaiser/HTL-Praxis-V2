@@ -249,3 +249,4 @@ dialog.lottery-dialog:fullscreen{width:100vw;max-width:none;height:100dvh;max-he
  .report-unit-actions{display:flex!important;}
  .table-wrap{max-width:100%;overflow-x:auto;}
 }
+.tag-actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.tag-actions .btn{flex:1 1 125px;white-space:normal;height:auto;min-height:44px}.tag-card{border:1px solid #a0a0a055;border-radius:8px;padding:10px;margin:8px 0;overflow-wrap:anywhere}.tag-card summary{cursor:pointer;font-weight:600}.tag-editor #tagInput{display:grid;gap:8px;margin:10px 0}.tag-editor .field{gap:8px}.tag-editor select{max-width:100%}
