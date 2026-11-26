@@ -1,0 +1,14 @@
+'use strict';
+(function(){
+const esc=x=>escapeHtml(String(x??''));
+function today(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function pending(s){const result=[];for(const t of state.generalTemplates?.[s.classId]||[]){const values=s.generalForms?.[t.id]?.values||{};for(const i of t.items||[]){if(!['check','signature'].includes(i.type)&&!i.due)continue;if(values[i.id])continue;result.push({title:t.name+' · '+i.label,due:i.due||t.due||''});}}for(const t of s.individualTasks||[]){if(!t.deletedAt&&t.status!=='erledigt')result.push({title:t.title,due:t.due||''});}return result.map(x=>({...x,late:!!x.due&&x.due<today()}));}
+function summary(pupils){const rows=pupils.flatMap(s=>pending(s).map(x=>({...x,s})));return {rows,late:rows.filter(x=>x.late).length};}
+function panel(pupils){const {rows,late}=summary(pupils);const el=document.createElement('section');el.className='section-card deadline-panel';el.innerHTML=`<details ${late?'open':''}><summary><b>Offene Checklisten / Aufgaben: ${rows.length}</b>${late?` <span class="deadline-late">❗ ${late} überfällig</span>`:''}</summary>${rows.length?`<div class="deadline-list">${rows.sort((a,b)=>Number(b.late)-Number(a.late)||String(a.due||'9999').localeCompare(b.due||'9999')).map(x=>`<div><b>${esc(x.s.name)}</b> · ${esc(x.title)} <span class="${x.late?'deadline-late':'small'}">${x.late?'❗ ':''}${x.due?esc(x.due):'ohne Frist'}</span></div>`).join('')}</div>`:'<p class="small">Keine offenen Punkte.</p>'}</details>`;return el;}
+function insert(pupils){const h=view.querySelector('.view-header');if(h)h.after(panel(pupils));}
+const oldTable=studentTable;studentTable=function(cid,gid,unitId){return oldTable(cid,gid,unitId).replace(/(<div class="name-cell" data-student="([^"]+)"[^>]*>)([\s\S]*?)(<\/div>)/g,(all,a,id,b,c)=>{const s=student(id),late=s?pending(s).filter(x=>x.late):[];return a+b+(late.length?` <span class="deadline-late" title="${esc(late.map(x=>x.title+' ('+x.due+')').join('; '))}" aria-label="${late.length} überfällige Punkte">❗ ${late.length}</span>`:'')+c;});};
+const oldClass=renderClass;renderClass=function(cid){oldClass(cid);insert(classStudents(cid));};
+const oldGroup=renderGroup;renderGroup=function(cid,gid,unitId){oldGroup(cid,gid,unitId);insert(groupStudents(cid,gid));};
+const oldDashboard=renderDashboard;renderDashboard=function(){oldDashboard();view.querySelectorAll('[data-c]').forEach(el=>{const {rows,late}=summary(classStudents(el.dataset.c));if(!rows.length)return;const d=document.createElement('div');d.className='small';d.innerHTML=`${rows.length} offene Punkte${late?` · <span class="deadline-late">❗ ${late} überfällig</span>`:''}`;el.append(d);});};
+const oldStudent=renderStudent;renderStudent=function(sid,unitId){oldStudent(sid,unitId);const s=student(sid);if(s)insert([s]);};
+})();

@@ -250,3 +250,15 @@ dialog.lottery-dialog:fullscreen{width:100vw;max-width:none;height:100dvh;max-he
  .table-wrap{max-width:100%;overflow-x:auto;}
 }
 .tag-actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.tag-actions .btn{flex:1 1 125px;white-space:normal;height:auto;min-height:44px}.tag-card{border:1px solid #a0a0a055;border-radius:8px;padding:10px;margin:8px 0;overflow-wrap:anywhere}.tag-card summary{cursor:pointer;font-weight:600}.tag-editor #tagInput{display:grid;gap:8px;margin:10px 0}.tag-editor .field{gap:8px}.tag-editor select{max-width:100%}
+
+/* V8.0.1: group heading and responsive actions */
+@media screen {
+#view .group-view-header {display:flex;flex-direction:column;align-items:stretch;gap:10px;min-width:0;width:100%;max-width:100%;}
+#view .group-title-row {display:flex;align-items:center;flex-wrap:wrap;gap:12px;min-width:0;}
+#view .group-title-row h2 {overflow-wrap:anywhere;}
+#view .group-title-row #groupBlock {background:var(--navy);color:white;white-space:normal;flex:0 1 auto;}
+#view .group-view-header .toolbar {display:flex;flex-wrap:wrap!important;width:100%;min-width:0;max-width:100%;gap:8px;margin:0;}
+#view .group-view-header .toolbar .btn {flex:0 1 auto;white-space:normal;max-width:100%;overflow-wrap:anywhere;}
+}
+
+.deadline-late{color:#b42318;font-weight:700}.deadline-panel summary{cursor:pointer}.deadline-list{display:grid;gap:6px;margin-top:10px;max-height:240px;overflow:auto}.general-edit-row{flex-wrap:wrap}
