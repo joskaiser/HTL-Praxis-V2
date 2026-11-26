@@ -1,6 +1,10 @@
 HTL Praxis - Changelog
 ======================
 
+8.0.0 - 26.11.2026
+- Versionswechsel auf Basis 7.5.58: Tag-System, Gruppenauswertung, Blockplanung und Einheitenkopie.
+- Datenformat und Synchronisierung unveraendert.
+
 6.0.0 - 07.10.2026
 - Datenhaltung lokal auf IndexedDB umgestellt (groessere Datenmengen als localStorage)
 - OneDrive-Synchronisierung auf Microsoft Graph App Folder umgestellt
